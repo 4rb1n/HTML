@@ -3,162 +3,522 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>HackLab // White Hat Education</title>
+<title>HackLab — White Hat Security Education</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0e0a;
-    --panel: #0f160f;
-    --green: #00ff9c;
-    --green-dim: #00b36b;
-    --text: #c8ffd8;
-    --accent: #00d4ff;
-    --danger: #ff4d6d;
+    --bg-0: #05070d;
+    --bg-1: #0a0e1a;
+    --bg-2: #0f1420;
+    --panel: #111827;
+    --panel-2: #1a2235;
+    --border: #1f2a44;
+    --border-glow: #2dd4bf;
+    --accent: #2dd4bf;
+    --accent-2: #22d3ee;
+    --accent-3: #a855f7;
+    --text: #e6edf7;
+    --text-dim: #8b97b0;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --sidebar-w: 260px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     height: 100%;
-    background: var(--bg);
+    background: var(--bg-0);
     color: var(--text);
-    font-family: "Fira Code", "Courier New", monospace;
+    font-family: 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
 
-  /* CRT scanline overlay */
-  body::before {
-    content: "";
+  body {
+    display: flex;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(45, 212, 191, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(168, 85, 247, 0.08), transparent 45%),
+      var(--bg-0);
+  }
+
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ================= SIDEBAR ================= */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 1rem;
     position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0, 255, 156, 0.03) 0px,
-      rgba(0, 255, 156, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    pointer-events: none;
-    z-index: 9999;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.3s ease;
+    z-index: 1000;
   }
 
-  /* ===== NAV ===== */
-  nav {
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+  }
+
+  .brand-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-3));
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #06121a;
+    box-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
+  }
+
+  .brand-text {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .brand-sub {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .nav-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding: 0.75rem 0.75rem 0.4rem;
+    font-weight: 600;
+  }
+
+  .side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    list-style: none;
+  }
+
+  .side-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: 8px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .side-nav a:hover {
+    background: var(--panel);
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  .side-nav a.active {
+    background: linear-gradient(90deg, rgba(45, 212, 191, 0.12), transparent);
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+
+  .side-nav .icon {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    flex-shrink: 0;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 1rem 0.75rem 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    margin-right: 0.4rem;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ================= MAIN ================= */
+  .main {
+    flex: 1;
+    margin-left: var(--sidebar-w);
+    min-width: 0;
+  }
+
+  /* Top bar */
+  .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    border-bottom: 1px solid var(--green-dim);
-    background: rgba(10, 14, 10, 0.9);
-    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(10, 14, 26, 0.75);
+    backdrop-filter: blur(12px);
     position: sticky;
     top: 0;
     z-index: 100;
   }
 
-  .logo {
-    font-weight: bold;
-    font-size: 1.3rem;
-    color: var(--green);
-    text-shadow: 0 0 10px var(--green);
-  }
-  .logo span { color: var(--accent); }
-
-  nav ul {
-    display: flex;
-    gap: 1.5rem;
-    list-style: none;
-  }
-  nav a {
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: 0.2s;
-  }
-  nav a:hover {
-    color: var(--green);
-    text-shadow: 0 0 8px var(--green);
+  .topbar-title {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  /* ===== HERO / TERMINAL ===== */
-  .hero {
-    min-height: 90vh;
+  .topbar-title strong { color: var(--accent); }
+
+  .topbar-actions {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    gap: 0.6rem;
     align-items: center;
-    padding: 2rem;
-    text-align: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #04121a;
+    border: none;
+    box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+  }
+
+  .btn-primary:hover {
+    color: #04121a;
+    box-shadow: 0 0 30px rgba(45, 212, 191, 0.55);
+  }
+
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  /* ================= CONTENT ================= */
+  .content { padding: 3rem 2.5rem; max-width: 1200px; }
+
+  /* HERO */
+  .hero {
+    padding: 3rem 0 4rem;
+    position: relative;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 100px;
+    background: rgba(45, 212, 191, 0.08);
+    border: 1px solid rgba(45, 212, 191, 0.3);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
   }
 
   .hero h1 {
-    font-size: clamp(2rem, 6vw, 4rem);
-    color: var(--green);
-    text-shadow: 0 0 20px var(--green);
-    margin-bottom: 1rem;
-    letter-spacing: 2px;
+    font-size: clamp(2rem, 5.5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent-3) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    max-width: 900px;
   }
 
   .hero p {
-    max-width: 700px;
-    color: var(--text);
-    opacity: 0.85;
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    max-width: 640px;
+    line-height: 1.7;
     margin-bottom: 2rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  /* Stats strip */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-top: 3rem;
+  }
+
+  .stat {
+    padding: 1.2rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.25s;
+  }
+
+  .stat:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px -10px rgba(45, 212, 191, 0.3);
+  }
+
+  .stat-num {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* SECTION */
+  section.block {
+    padding: 4rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-head {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    margin-bottom: 0.6rem;
+  }
+
+  .section-desc {
+    color: var(--text-dim);
+    max-width: 620px;
     line-height: 1.6;
   }
 
-  /* ===== TERMINAL BOX ===== */
-  .terminal {
-    width: min(800px, 95%);
-    background: var(--panel);
-    border: 1px solid var(--green-dim);
-    border-radius: 8px;
-    box-shadow: 0 0 30px rgba(0, 255, 156, 0.15);
+  /* CARDS */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
     overflow: hidden;
-    text-align: left;
+    cursor: pointer;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: radial-gradient(circle at top right, rgba(45, 212, 191, 0.15), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+    box-shadow: 0 20px 40px -20px rgba(45, 212, 191, 0.4);
+  }
+
+  .card:hover::after { opacity: 1; }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(168, 85, 247, 0.15));
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+  }
+
+  .card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .card p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 100px;
+    background: rgba(45, 212, 191, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(45, 212, 191, 0.25);
+  }
+
+  .pill.purple { background: rgba(168, 85, 247, 0.1); color: var(--accent-3); border-color: rgba(168, 85, 247, 0.3); }
+  .pill.orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
+  .pill.blue   { background: rgba(34, 211, 238, 0.1); color: var(--accent-2); border-color: rgba(34, 211, 238, 0.3); }
+
+  /* TERMINAL */
+  .terminal {
+    background: #05070d;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+    margin-top: 1.5rem;
   }
 
   .term-header {
-    background: #081208;
-    padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    border-bottom: 1px solid var(--green-dim);
+    padding: 0.7rem 1rem;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
   }
 
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
   .dot.r { background: #ff5f56; }
   .dot.y { background: #ffbd2e; }
   .dot.g { background: #27c93f; }
 
   .term-title {
     margin-left: auto;
-    font-size: 0.75rem;
-    color: var(--green-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
   }
 
   .term-body {
-    padding: 1rem;
-    height: 260px;
+    padding: 1.2rem;
+    height: 280px;
     overflow-y: auto;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
   }
 
-  .term-body .line { margin-bottom: 0.3rem; }
-  .term-body .prompt { color: var(--green); }
-  .term-body .out { color: var(--accent); }
+  .term-body .line { white-space: pre-wrap; word-break: break-word; }
+  .term-body .prompt { color: var(--accent); font-weight: 600; }
+  .term-body .out { color: var(--text); }
   .term-body .err { color: var(--danger); }
+  .term-body .muted { color: var(--text-dim); }
 
   .term-input-line {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    border-top: 1px solid var(--green-dim);
-    padding: 0.6rem 1rem;
-    background: #081208;
+    gap: 0.6rem;
+    border-top: 1px solid var(--border);
+    padding: 0.8rem 1.2rem;
+    background: rgba(17, 24, 39, 0.5);
+    font-family: 'JetBrains Mono', monospace;
   }
-  .term-input-line span { color: var(--green); }
+
+  .term-input-line span { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+
   .term-input-line input {
     flex: 1;
     background: transparent;
@@ -166,113 +526,111 @@
     outline: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 0.9rem;
-  }
-
-  /* ===== SECTIONS ===== */
-  section {
-    padding: 4rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  section h2 {
-    color: var(--green);
-    font-size: 1.8rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    text-shadow: 0 0 12px var(--green);
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--green-dim);
-    border-radius: 8px;
-    padding: 1.5rem;
-    transition: 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--green), transparent);
-    transition: 0.5s;
-  }
-
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 25px rgba(0, 255, 156, 0.25);
-    border-color: var(--green);
-  }
-
-  .card:hover::before { left: 100%; }
-
-  .card h3 {
-    color: var(--accent);
-    margin-bottom: 0.6rem;
-    font-size: 1.1rem;
-  }
-
-  .card p {
-    font-size: 0.88rem;
-    opacity: 0.85;
-    line-height: 1.5;
-  }
-
-  .card .tag {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.2rem 0.6rem;
-    font-size: 0.7rem;
-    border: 1px solid var(--green-dim);
-    border-radius: 3px;
-    color: var(--green);
-  }
-
-  /* ===== RESOURCES ===== */
-  .resources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.8rem;
-    justify-content: center;
-  }
-
-  .resources a {
-    padding: 0.6rem 1.2rem;
-    border: 1px solid var(--green-dim);
-    color: var(--green);
-    text-decoration: none;
-    border-radius: 4px;
     font-size: 0.85rem;
-    transition: 0.2s;
   }
 
-  .resources a:hover {
-    background: var(--green);
-    color: #000;
-    box-shadow: 0 0 15px var(--green);
+  /* ETHICS GRID */
+  .ethics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
   }
 
-  /* ===== FOOTER ===== */
+  .ethic {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 1.2rem;
+    transition: all 0.25s;
+  }
+
+  .ethic:hover {
+    background: var(--panel-2);
+    transform: translateX(4px);
+    border-left-color: var(--accent-3);
+  }
+
+  .ethic .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  .ethic h4 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+  .ethic p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+  /* RESOURCES */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.8rem;
+  }
+
+  .resource {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.87rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .resource:hover {
+    border-color: var(--accent);
+    background: var(--panel-2);
+    transform: translateY(-2px);
+    color: var(--accent);
+  }
+
+  .resource .arrow { color: var(--text-dim); transition: 0.2s; }
+  .resource:hover .arrow { color: var(--accent); transform: translateX(3px); }
+
+  /* FOOTER */
   footer {
-    text-align: center;
-    padding: 2rem;
-    border-top: 1px solid var(--green-dim);
-    font-size: 0.8rem;
-    color: var(--green-dim);
+    padding: 2.5rem 2.5rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    max-width: 1200px;
   }
 
-  /* ===== ANIMATIONS ===== */
+  footer strong { color: var(--accent); }
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width: 900px) {
+    .sidebar {
+      transform: translateX(-100%);
+      box-shadow: 10px 0 40px rgba(0,0,0,0.6);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .menu-toggle { display: grid; place-items: center; }
+    .topbar { padding: 0.9rem 1.2rem; }
+    .content { padding: 2rem 1.2rem; }
+    footer { padding: 2rem 1.2rem; }
+    .hero { padding: 2rem 0 3rem; }
+  }
+
+  @media (max-width: 500px) {
+    .topbar-actions .btn span { display: none; }
+    .hero-actions { flex-direction: column; }
+    .hero-actions .btn { justify-content: center; width: 100%; }
+  }
+
+  /* ================= ANIMATIONS ================= */
   @keyframes blink {
     50% { opacity: 0; }
   }
@@ -280,203 +638,439 @@
     display: inline-block;
     width: 8px;
     height: 1em;
-    background: var(--green);
+    background: var(--accent);
     animation: blink 1s steps(2) infinite;
     vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  .fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* Scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-1); }
   ::-webkit-scrollbar-thumb {
-    background: var(--green-dim);
+    background: var(--border);
     border-radius: 4px;
   }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Mobile overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    z-index: 999;
+  }
+  .overlay.show { display: block; }
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="logo">Hack<span>Lab</span>_</div>
-  <ul>
-    <li><a href="#learn">Learn</a></li>
-    <li><a href="#tools">Tools</a></li>
-    <li><a href="#ethics">Ethics</a></li>
-    <li><a href="#resources">Resources</a></li>
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-icon">H</div>
+    <div>
+      <div class="brand-text">HackLab</div>
+      <div class="brand-sub">White Hat Edu</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Navigation</div>
+  <ul class="side-nav">
+    <li>
+      <a href="#home" class="active">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+        Home
+      </a>
+    </li>
+    <li>
+      <a href="#learn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 012-2h12v16H6a2 2 0 01-2-2zM4 19.5A2.5 2.5 0 006.5 22H20"/></svg>
+        Learning Paths
+      </a>
+    </li>
+    <li>
+      <a href="#terminal">
+        <svg class="icon" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        Terminal
+      </a>
+    </li>
+    <li>
+      <a href="#tools">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 105.4 5.4L21 13l-8 8-2-2 8-8-1.3-1.3z"/><path d="M3 21l9-9"/></svg>
+        Tools
+      </a>
+    </li>
+    <li>
+      <a href="#ethics">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4.5L17 20l-5-3-5 3 1.5-6.5L4 9l6-1z"/></svg>
+        Ethics
+      </a>
+    </li>
+    <li>
+      <a href="#resources">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>
+        Resources
+      </a>
+    </li>
   </ul>
-</nav>
 
-<!-- HERO -->
-<header class="hero">
-  <h1>WHITE HAT LAB</h1>
-  <p>Learn ethical hacking, cybersecurity fundamentals, and defensive techniques — the right way. No black hats. Just skills, curiosity, and a keyboard.</p>
-
-  <div class="terminal">
-    <div class="term-header">
-      <span class="dot r"></span>
-      <span class="dot y"></span>
-      <span class="dot g"></span>
-      <span class="term-title">hacklab ~ bash</span>
-    </div>
-    <div class="term-body" id="termBody"></div>
-    <form class="term-input-line" id="termForm">
-      <span>user@hacklab:~$</span>
-      <input id="termInput" autocomplete="off" spellcheck="false" placeholder="type 'help'..." />
-    </form>
+  <div class="sidebar-footer">
+    <div><span class="status-dot"></span>All systems operational</div>
+    <div style="margin-top:0.4rem;">v2.0 · Built for good 💚</div>
   </div>
-</header>
+</aside>
 
-<!-- LEARN -->
-<section id="learn">
-  <h2>> Learning Paths</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>Networking Basics</h3>
-      <p>TCP/IP, DNS, HTTP, packets, and how data actually travels across the internet.</p>
-      <span class="tag">Beginner</span>
-    </div>
-    <div class="card">
-      <h3>Linux Fundamentals</h3>
-      <p>Command line, file permissions, processes, and the tools every hacker needs.</p>
-      <span class="tag">Beginner</span>
-    </div>
-    <div class="card">
-      <h3>Web Security</h3>
-      <p>OWASP Top 10, XSS, SQLi, CSRF — understand attacks so you can stop them.</p>
-      <span class="tag">Intermediate</span>
-    </div>
-    <div class="card">
-      <h3>Cryptography</h3>
-      <p>Hashing, symmetric/asymmetric encryption, TLS, and PKI explained simply.</p>
-      <span class="tag">Intermediate</span>
-    </div>
-    <div class="card">
-      <h3>Penetration Testing</h3>
-      <p>Recon, scanning, exploitation, and reporting — all in legal lab environments.</p>
-      <span class="tag">Advanced</span>
-    </div>
-    <div class="card">
-      <h3>Blue Team Defense</h3>
-      <p>Detection, logging, SIEM, incident response, and hardening systems.</p>
-      <span class="tag">Advanced</span>
+<div class="overlay" id="overlay"></div>
+
+<!-- ============ MAIN ============ -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="topbar-title">~/hacklab/<strong id="currentSection">home</strong></div>
+    <div class="topbar-actions">
+      <a href="#resources" class="btn">📚 <span>Resources</span></a>
+      <a href="#learn" class="btn btn-primary">🚀 <span>Start Learning</span></a>
     </div>
   </div>
-</section>
 
-<!-- TOOLS -->
-<section id="tools">
-  <h2>> Legal Practice Tools</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>TryHackMe</h3>
-      <p>Guided, gamified labs for beginners — perfect for your first capture-the-flag.</p>
-    </div>
-    <div class="card">
-      <h3>Hack The Box</h3>
-      <p>Realistic machines to exploit legally. Great for intermediate skills.</p>
-    </div>
-    <div class="card">
-      <h3>OWASP Juice Shop</h3>
-      <p>A deliberately vulnerable web app for practicing web exploitation.</p>
-    </div>
-    <div class="card">
-      <h3>Wireshark</h3>
-      <p>Free packet analyzer — see exactly what flows through your network.</p>
-    </div>
+  <div class="content">
+
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <div class="badge fade-up">🛡️ &nbsp;Ethical hacking · Legal labs only</div>
+      <h1 class="fade-up" style="animation-delay:0.1s">
+        Master cybersecurity.<br/>The right way.
+      </h1>
+      <p class="fade-up" style="animation-delay:0.2s">
+        HackLab is your launchpad into white hat hacking — real skills, real labs, real defenses.
+        No black hats, no shortcuts, no shady business. Just you, a keyboard, and the pursuit of knowledge.
+      </p>
+      <div class="hero-actions fade-up" style="animation-delay:0.3s">
+        <a href="#learn" class="btn btn-primary">Start Learning →</a>
+        <a href="#terminal" class="btn">Open Terminal</a>
+      </div>
+
+      <div class="stats fade-up" style="animation-delay:0.4s">
+        <div class="stat">
+          <div class="stat-num">6+</div>
+          <div class="stat-label">Learning Paths</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-label">Free Resources</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">24/7</div>
+          <div class="stat-label">Labs Available</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Curiosity Needed</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEARNING PATHS -->
+    <section class="block" id="learn">
+      <div class="section-head">
+        <div class="section-tag">// 01 — Curriculum</div>
+        <h2 class="section-title">Learning Paths</h2>
+        <p class="section-desc">Structured tracks from zero to hero. Start anywhere, go everywhere.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon">🌐</div>
+          <h3>Networking Basics</h3>
+          <p>TCP/IP, DNS, HTTP, packets, and how data actually flows across the internet.</p>
+          <span class="pill">Beginner</span>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🐧</div>
+          <h3>Linux Fundamentals</h3>
+          <p>Command line, permissions, processes, pipes, and the tools every hacker needs.</p>
+          <span class="pill">Beginner</span>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🕸️</div>
+          <h3>Web Security</h3>
+          <p>OWASP Top 10, XSS, SQLi, CSRF — understand attacks so you can stop them.</p>
+          <span class="pill blue">Intermediate</span>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔐</div>
+          <h3>Cryptography</h3>
+          <p>Hashing, symmetric/asymmetric encryption, TLS handshakes, and PKI explained simply.</p>
+          <span class="pill blue">Intermediate</span>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🎯</div>
+          <h3>Penetration Testing</h3>
+          <p>Recon, scanning, exploitation, and professional reporting — all in legal labs.</p>
+          <span class="pill purple">Advanced</span>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🛡️</div>
+          <h3>Blue Team Defense</h3>
+          <p>Detection, logging, SIEM, incident response, and hardening enterprise systems.</p>
+          <span class="pill orange">Advanced</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TERMINAL -->
+    <section class="block" id="terminal">
+      <div class="section-head">
+        <div class="section-tag">// 02 — Interactive</div>
+        <h2 class="section-title">Try the Terminal</h2>
+        <p class="section-desc">Type <code style="color:var(--accent)">help</code> to get started. Try: about, learn, ethics, whoami, clear.</p>
+      </div>
+
+      <div class="terminal">
+        <div class="term-header">
+          <span class="dot r"></span>
+          <span class="dot y"></span>
+          <span class="dot g"></span>
+          <span class="term-title">user@hacklab: ~</span>
+        </div>
+        <div class="term-body" id="termBody"></div>
+        <form class="term-input-line" id="termForm">
+          <span>❯</span>
+          <input id="termInput" autocomplete="off" spellcheck="false" placeholder="type 'help'..." />
+        </form>
+      </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section class="block" id="tools">
+      <div class="section-head">
+        <div class="section-tag">// 03 — Arsenal</div>
+        <h2 class="section-title">Legal Practice Tools</h2>
+        <p class="section-desc">Handpicked platforms to sharpen your skills — 100% legal, 100% awesome.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon">🎮</div>
+          <h3>TryHackMe</h3>
+          <p>Guided, gamified labs for beginners — perfect for your first capture-the-flag.</p>
+          <span class="pill">Guided</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">📦</div>
+          <h3>Hack The Box</h3>
+          <p>Realistic machines to exploit legally. Great for intermediate skills.</p>
+          <span class="pill blue">Realistic</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧃</div>
+          <h3>OWASP Juice Shop</h3>
+          <p>A deliberately vulnerable web app for practicing modern web exploitation.</p>
+          <span class="pill purple">Web</span>
+        </div>
+        <div class="card">
+          <div class="card-icon">📡</div>
+          <h3>Wireshark</h3>
+          <p>Free packet analyzer — see exactly what flows through your network in real time.</p>
+          <span class="pill orange">Network</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETHICS -->
+    <section class="block" id="ethics">
+      <div class="section-head">
+        <div class="section-tag">// 04 — Code of Conduct</div>
+        <h2 class="section-title">The White Hat Code</h2>
+        <p class="section-desc">Skill without ethics is a weapon. These four rules separate hackers from criminals.</p>
+      </div>
+
+      <div class="ethics-grid">
+        <div class="ethic">
+          <div class="num">01</div>
+          <h4>Permission First</h4>
+          <p>Never test a system you don't own or have written authorization to test.</p>
+        </div>
+        <div class="ethic">
+          <div class="num">02</div>
+          <h4>Do No Harm</h4>
+          <p>Don't damage, delete, or leak data. Document findings and report responsibly.</p>
+        </div>
+        <div class="ethic">
+          <div class="num">03</div>
+          <h4>Stay Legal</h4>
+          <p>Laws like CFAA (US), CMA (UK), and GDPR (EU) apply. Know them before you act.</p>
+        </div>
+        <div class="ethic">
+          <div class="num">04</div>
+          <h4>Keep Learning</h4>
+          <p>The best hackers are the most curious. Read, lab, repeat — forever.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESOURCES -->
+    <section class="block" id="resources">
+      <div class="section-head">
+        <div class="section-tag">// 05 — Vault</div>
+        <h2 class="section-title">Free Resources</h2>
+        <p class="section-desc">Curated links to legit training platforms. No piracy, no sketchy links.</p>
+      </div>
+
+      <div class="resource-grid">
+        <a class="resource" href="https://tryhackme.com" target="_blank" rel="noopener">
+          TryHackMe <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://www.hackthebox.com" target="_blank" rel="noopener">
+          Hack The Box <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">
+          OWASP Top 10 <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://www.wireshark.org" target="_blank" rel="noopener">
+          Wireshark <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://www.kali.org" target="_blank" rel="noopener">
+          Kali Linux <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://overthewire.org/wargames/" target="_blank" rel="noopener">
+          OverTheWire <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://picoctf.org" target="_blank" rel="noopener">
+          picoCTF <span class="arrow">→</span>
+        </a>
+        <a class="resource" href="https://portswigger.net/web-security" target="_blank" rel="noopener">
+          PortSwigger Academy <span class="arrow">→</span>
+        </a>
+      </div>
+    </section>
+
   </div>
-</section>
 
-<!-- ETHICS -->
-<section id="ethics">
-  <h2>> The White Hat Code</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>1. Permission First</h3>
-      <p>Never test a system you don't own or have written authorization to test.</p>
-    </div>
-    <div class="card">
-      <h3>2. Do No Harm</h3>
-      <p>Don't damage, delete, or leak data. Document and report findings.</p>
-    </div>
-    <div class="card">
-      <h3>3. Stay Legal</h3>
-      <p>Laws like CFAA (US) and GDPR (EU) apply. Know them before you act.</p>
-    </div>
-    <div class="card">
-      <h3>4. Keep Learning</h3>
-      <p>The best hackers are the most curious. Read, lab, repeat.</p>
-    </div>
-  </div>
-</section>
+  <footer>
+    <div>© 2025 <strong>HackLab</strong> — Built for education. Hack responsibly. 💚</div>
+    <div class="mono" style="font-size:0.75rem;">stay curious · stay legal</div>
+  </footer>
 
-<!-- RESOURCES -->
-<section id="resources">
-  <h2>> Free Resources</h2>
-  <div class="resources">
-    <a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a>
-    <a href="https://www.hackthebox.com" target="_blank" rel="noopener">Hack The Box</a>
-    <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">OWASP Top 10</a>
-    <a href="https://www.wireshark.org" target="_blank" rel="noopener">Wireshark</a>
-    <a href="https://www.kali.org" target="_blank" rel="noopener">Kali Linux</a>
-    <a href="https://overthewire.org/wargames/" target="_blank" rel="noopener">OverTheWire</a>
-    <a href="https://picoctf.org" target="_blank" rel="noopener">picoCTF</a>
-    <a href="https://portswigger.net/web-security" target="_blank" rel="noopener">PortSwigger Academy</a>
-  </div>
-</section>
-
-<footer>
-  <p>&copy; 2025 HackLab — Built for education. Hack responsibly. 💚</p>
-</footer>
+</main>
 
 <script>
-  // ===== Interactive Terminal =====
+  // ============ SIDEBAR TOGGLE ============
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const menuToggle = document.getElementById('menuToggle');
+
+  menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  });
+
+  // Close sidebar on nav click (mobile)
+  document.querySelectorAll('.side-nav a').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth <= 900) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+      }
+    });
+  });
+
+  // ============ ACTIVE SECTION HIGHLIGHT ============
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.side-nav a');
+  const currentSection = document.getElementById('currentSection');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+        if (currentSection) currentSection.textContent = id;
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ============ TERMINAL ============
   const termBody = document.getElementById('termBody');
   const termForm = document.getElementById('termForm');
   const termInput = document.getElementById('termInput');
 
   const banner = [
-    "  _   _            _    _          _     ",
-    " | | | | __ _  ___| | _| |    __ _| |__  ",
-    " | |_| |/ _` |/ __| |/ / |   / _` | '_ \\ ",
-    " |  _  | (_| | (__|   <| |__| (_| | |_) |",
-    " |_| |_|\\__,_|\\___|_|\\_\\_____\\__,_|_.__/ ",
-    "",
-    "Welcome to HackLab — type 'help' to get started."
+    { text: "╔══════════════════════════════════════╗", cls: "muted" },
+    { text: "║   HackLab Terminal · v2.0            ║", cls: "muted" },
+    { text: "║   Type 'help' for available commands ║", cls: "muted" },
+    { text: "╚══════════════════════════════════════╝", cls: "muted" },
+    { text: "", cls: "out" },
   ];
 
-  banner.forEach(line => addLine(line, 'out'));
+  banner.forEach(b => addLine(b.text, b.cls));
 
   const commands = {
     help() {
       return [
-        "Available commands:",
-        "  help        - show this message",
-        "  about       - what is HackLab?",
-        "  learn       - list learning topics",
-        "  ethics      - white hat code",
-        "  clear       - clear terminal",
-        "  whoami      - who are you?",
-        "  sudo        - try it 😉"
+        "┌─ Available Commands ─────────────────┐",
+        "│  help       show this message        │",
+        "│  about      what is HackLab?         │",
+        "│  learn      list learning topics     │",
+        "│  ethics     the white hat code       │",
+        "│  whoami     who are you?             │",
+        "│  clear      clear terminal           │",
+        "│  sudo       try it ;)                │",
+        "└──────────────────────────────────────┘"
       ];
     },
     about() {
       return [
-        "HackLab is an educational site for aspiring white hat hackers.",
-        "We teach skills for DEFENSE and LEGAL testing only.",
-        "Never attack systems you don't own or have permission to test."
+        "HackLab is an educational platform for aspiring white hat hackers.",
+        "We teach DEFENSE and LEGAL testing only.",
+        "⚠  Never attack systems you don't own or have permission to test."
       ];
     },
     learn() {
       return [
         "Learning topics:",
-        "  • Networking  • Linux  • Web Security",
-        "  • Crypto      • Pentesting  • Blue Team"
+        "  ▸ Networking basics     ▸ Linux fundamentals",
+        "  ▸ Web security          ▸ Cryptography",
+        "  ▸ Penetration testing   ▸ Blue team defense"
       ];
     },
     ethics() {
       return [
-        "White Hat Code:",
+        "The White Hat Code:",
         "  1. Permission first",
         "  2. Do no harm",
         "  3. Stay legal",
@@ -506,7 +1100,7 @@
   function addPrompt(cmd) {
     const div = document.createElement('div');
     div.className = 'line';
-    div.innerHTML = `<span class="prompt">user@hacklab:~$</span> ${escapeHtml(cmd)}`;
+    div.innerHTML = `<span class="prompt">❯</span> <span class="out">${escapeHtml(cmd)}</span>`;
     termBody.appendChild(div);
     termBody.scrollTop = termBody.scrollHeight;
   }
@@ -535,8 +1129,15 @@
     termInput.value = '';
   });
 
-  // Focus terminal input when clicking terminal
   document.querySelector('.terminal').addEventListener('click', () => termInput.focus());
+
+  // ============ FOCUS ANIMATION ON CARDS ============
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.style.borderColor = 'var(--accent-3)';
+      setTimeout(() => card.style.borderColor = '', 400);
+    });
+  });
 </script>
 
 </body>
